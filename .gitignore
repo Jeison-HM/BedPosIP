@@ -1,22 +1,118 @@
-# Python-generated files
+# =============================================================================
+# GITIGNORE - Proyecto Acelerador Neuronal
+# =============================================================================
+# Archivos y directorios que no deben versionarse en Git
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# 1. PYTHON
+# -----------------------------------------------------------------------------
+# Bytecode y caché
 __pycache__/
 *.py[oc]
+*.pyo
+
+# Entornos virtuales
+.venv/
+venv/
+env/
+ENV/
+
+# Distribución y empaquetado
 build/
 dist/
 wheels/
-*.egg-info
+*.egg-info/
+.eggs/
 
-# Virtual environments
-.venv
+# -----------------------------------------------------------------------------
+# 2. JUPYTER NOTEBOOKS
+# -----------------------------------------------------------------------------
+.ipynb_checkpoints/
+*.ipynb_checkpoints
 
-# Documents
-.old/
+# -----------------------------------------------------------------------------
+# 3. LATEX - Archivos auxiliares
+# -----------------------------------------------------------------------------
+# Archivos de compilación
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+
+# Bibliografía
+*.bbl
+*.blg
+
+# Sincronización y caché
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+
+# Glosarios y acrónimos (glossaries-extra)
+*.glo
+*.gls
+*.glg
+*.ist
+*.acr
+*.acn
+*.alg
+
+# Backups de editores
+*.bak*
+*~
+.~lock*#
+
+# Logs específicos
+indent.log
+
+# -----------------------------------------------------------------------------
+# 4. CONVERSIONES Y GENERADOS
+# -----------------------------------------------------------------------------
+# Archivos de texto auto-generados
+*.txt
+
+# -----------------------------------------------------------------------------
+# 5. DATOS Y DOCUMENTOS
+# -----------------------------------------------------------------------------
+# Archivos de datos grandes
 dataset/dataset_original.zip
+*.xlsx
+
+# Directorios de documentación y recursos (contenido no fuente)
 documents/
 images/
 postulacion/
 propuesta/
 pynq-z2/
 reportes/
+.old/
+
+# Archivos de propuesta antiguos
 propuestaAceleradorNeuronal_JeisonHernandez.*
-*.xlsx
+
+# -----------------------------------------------------------------------------
+# 6. SISTEMA OPERATIVO
+# -----------------------------------------------------------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+.nfs*
+
+# =============================================================================
+# NOTAS:
+# - Los archivos .tex, .bib y .pdf finales NO se ignoran (son el producto)
+# - Si prefieres ignorar también los PDFs generados, descomenta la siguiente línea:
+# *.pdf
+# =============================================================================
