@@ -116,3 +116,8 @@ Desktop.ini
 # - Si prefieres ignorar también los PDFs generados, descomenta la siguiente línea:
 # *.pdf
 # =============================================================================
+
+# -----------------------------------------------------------------------------
+# 7. MODELO - Ejemplos y referencias no versionados
+# -----------------------------------------------------------------------------
+model/example/
