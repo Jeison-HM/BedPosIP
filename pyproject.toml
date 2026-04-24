@@ -1,3 +1,7 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "proyectogrado"
 version = "0.1.0"
@@ -17,3 +21,6 @@ dependencies = [
     "tensorboard>=2.20.0",
     "tensorflow[and-cuda]>=2.21.0",
 ]
+
+[tool.setuptools.packages.find]
+where = ["src"]
