@@ -73,13 +73,13 @@ indent.log
 # -----------------------------------------------------------------------------
 # Archivos de texto auto-generados
 *.txt
-model/tuning
+tuning
 
 # -----------------------------------------------------------------------------
 # 5. DATOS Y DOCUMENTOS
 # -----------------------------------------------------------------------------
 # Archivos de datos grandes
-dataset/dataset_original.zip
+dataset_original.zip
 *.xlsx
 
 # Directorios de documentación y recursos (contenido no fuente)
