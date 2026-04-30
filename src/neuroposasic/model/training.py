@@ -5,7 +5,7 @@ By centralizing these functions, both FP32 and QAT training are guaranteed
 to use the same interface, facilitating reproducibility and maintenance.
 
 Example:
-    >>> from neuroposasic.training import get_callbacks, train_model
+    >>> from neuroposasic.model import get_callbacks, train_model
     >>> callbacks = get_callbacks(model_name='base', patience=10)
     >>> history = train_model(
     ...     model, X_train, y_train, X_val, y_val, callbacks,
@@ -20,7 +20,7 @@ import keras
 
 # HGQ2 callback (optional, only used for quantized models)
 try:
-    from hgq.utils.sugar import FreeEBOPs
+    from hgq.utils.sugar import FreeEBOPs, PBar
 except ImportError:
     FreeEBOPs = None
 
@@ -74,7 +74,14 @@ def get_callbacks(
     ]
 
     if track_ebops and FreeEBOPs is not None:
-        callbacks.append(FreeEBOPs())
+        # Additional callbacks for qat following larger_jet_tagger.ipynb
+        # pbar = PBar(
+        #     "loss: {loss:.3f}/{val_loss:.3f} - acc: {accuracy:.3f}/{val_accuracy:.3f}"
+        # )
+        ebops = FreeEBOPs()
+        nan_terminate = keras.callbacks.TerminateOnNaN()
+
+        callbacks.extend([ebops, nan_terminate])
 
     print("Callbacks configured:")
     for cb in callbacks:
@@ -91,7 +98,7 @@ def train_model(
     y_val,
     callbacks: List[keras.callbacks.Callback],
     batch_size: int = 32,
-    max_epochs: int = 50,
+    epochs: int = 50,
 ) -> keras.callbacks.History:
     """Train a Keras model with the provided data and callbacks.
 
@@ -106,7 +113,7 @@ def train_model(
         y_val: Validation labels (one-hot).
         callbacks: List of callbacks (see :func:`get_callbacks`).
         batch_size: Batch size. Defaults to 32.
-        max_epochs: Maximum number of epochs. Defaults to 50.
+        epochs: Maximum number of epochs. Defaults to 50.
 
     Returns:
         :class:`History` object with training metrics.
@@ -117,7 +124,7 @@ def train_model(
         X_train,
         y_train,
         batch_size=batch_size,
-        epochs=max_epochs,
+        epochs=epochs,
         validation_data=(X_val, y_val),
         callbacks=callbacks,
         verbose=1,
