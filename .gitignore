@@ -74,13 +74,25 @@ indent.log
 # Archivos de texto auto-generados
 *.txt
 tuning
+*.jou
 
 # -----------------------------------------------------------------------------
 # 5. DATOS Y DOCUMENTOS
 # -----------------------------------------------------------------------------
 # Archivos de datos grandes
-dataset_original.zip
+output
+*.csv
+*.npz
+*.hex
+dataset/augmentation
 *.xlsx
+myproject_axi_prj
+myproject_vivado_accelerator
+.Xil
+firmware
+myproject_prj
+vitis/
+*.pdf
 
 # Directorios de documentación y recursos (contenido no fuente)
 documents/
@@ -110,13 +122,6 @@ Desktop.ini
 # Linux
 *~
 .nfs*
-
-# =============================================================================
-# NOTAS:
-# - Los archivos .tex, .bib y .pdf finales NO se ignoran (son el producto)
-# - Si prefieres ignorar también los PDFs generados, descomenta la siguiente línea:
-# *.pdf
-# =============================================================================
 
 # -----------------------------------------------------------------------------
 # 7. MODELO - Ejemplos y referencias no versionados
