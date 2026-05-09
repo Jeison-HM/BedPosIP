@@ -6,7 +6,7 @@ set tcldir [file dirname [info script]]
 source [file join $tcldir project.tcl]
 
 # Path to the HLS wrapper IP (must be built first with Vitis HLS)
-set wrapper_ip_path [file join $tcldir "hls_wrapper" "myproject_axi_prj" "solution1" "impl" "ip"]
+set wrapper_ip_path [file join $tcldir ".." "vitis_pynq" "myproject_axi_prj" "solution1" "impl" "ip"]
 
 # Create Vivado project inside vivado/ directory
 set project_path [file join $tcldir "${project_name}_vivado_accelerator"]

@@ -2,8 +2,8 @@
 # Run: vitis-run --mode hls --tcl run_hls.tcl
 
 set project_dir [file dirname [info script]]
-set repo_root [file normalize [file join $project_dir ".." ".."]]
-set firmware_dir [file join $repo_root "vitis"]
+set repo_root [file normalize [file join $project_dir ".."]]
+set firmware_dir [file join $repo_root "soft_ip"]
 
 open_project myproject_axi_prj
 set_top myproject_axi
