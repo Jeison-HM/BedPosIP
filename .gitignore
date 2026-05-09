@@ -1,24 +1,25 @@
-# =============================================================================
-# GITIGNORE - Proyecto Acelerador Neuronal
-# =============================================================================
-# Archivos y directorios que no deben versionarse en Git
-# =============================================================================
+# -----------------------------------------------------------------------------
+# Operating System
+# -----------------------------------------------------------------------------
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*~
+.nfs*
 
 # -----------------------------------------------------------------------------
-# 1. PYTHON
+# Python
 # -----------------------------------------------------------------------------
-# Bytecode y caché
 __pycache__/
 *.py[oc]
 *.pyo
-
-# Entornos virtuales
 .venv/
 venv/
 env/
 ENV/
-
-# Distribución y empaquetado
 build/
 dist/
 wheels/
@@ -26,32 +27,25 @@ wheels/
 .eggs/
 
 # -----------------------------------------------------------------------------
-# 2. JUPYTER NOTEBOOKS
+# Jupyter Notebooks
 # -----------------------------------------------------------------------------
 .ipynb_checkpoints/
 *.ipynb_checkpoints
 
 # -----------------------------------------------------------------------------
-# 3. LATEX - Archivos auxiliares
+# LaTeX - Auxiliary Files
 # -----------------------------------------------------------------------------
-# Archivos de compilación
 *.aux
 *.log
 *.out
 *.toc
 *.lof
 *.lot
-
-# Bibliografía
 *.bbl
 *.blg
-
-# Sincronización y caché
 *.synctex.gz
 *.fdb_latexmk
 *.fls
-
-# Glosarios y acrónimos (glossaries-extra)
 *.glo
 *.gls
 *.glg
@@ -59,42 +53,38 @@ wheels/
 *.acr
 *.acn
 *.alg
-
-# Backups de editores
 *.bak*
-*~
 .~lock*#
-
-# Logs específicos
 indent.log
 
 # -----------------------------------------------------------------------------
-# 4. CONVERSIONES Y GENERADOS
+# FPGA / HLS / Vivado / Vitis Generated Artifacts
 # -----------------------------------------------------------------------------
-# Archivos de texto auto-generados
-*.txt
-tuning
-*.jou
+myproject_axi_prj
+myproject_vivado_accelerator
+myproject_prj
+.Xil
+firmware
+soft_ip/
 
 # -----------------------------------------------------------------------------
-# 5. DATOS Y DOCUMENTOS
+# Synopsys
 # -----------------------------------------------------------------------------
-# Archivos de datos grandes
+libs
+
+# -----------------------------------------------------------------------------
+# Data, Outputs & Documents
+# -----------------------------------------------------------------------------
 output
 *.csv
 *.npz
 *.hex
-dataset/augmentation
 *.xlsx
-myproject_axi_prj
-myproject_vivado_accelerator
-.Xil
-firmware
-myproject_prj
-soft_ip/
 *.pdf
+dataset/augmentation
+!DatosEntrenamiento.csv
 
-# Directorios de documentación y recursos (contenido no fuente)
+propuestaAceleradorNeuronal_JeisonHernandez.*
 documents/
 images/
 postulacion/
@@ -103,36 +93,14 @@ pynq-z2/
 reportes/
 .old/
 
-# Archivos de propuesta antiguos
-propuestaAceleradorNeuronal_JeisonHernandez.*
-
-# Dataset
-!DatosEntrenamiento.csv
-
 # -----------------------------------------------------------------------------
-# 6. SISTEMA OPERATIVO
-# -----------------------------------------------------------------------------
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# Windows
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-
-# Linux
-*~
-.nfs*
-
-# -----------------------------------------------------------------------------
-# 7. MODELO - Ejemplos y referencias no versionados
+# Model Examples & References
 # -----------------------------------------------------------------------------
 example/
 
 # -----------------------------------------------------------------------------
-# 8. SYNOPSYS - Librerías
+# Conversions & Generated Text Files
 # -----------------------------------------------------------------------------
-
-libs
+*.txt
+tuning
+*.jou
