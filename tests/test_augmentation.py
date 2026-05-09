@@ -1,7 +1,7 @@
 """Comprehensive tests for the data augmentation module.
 
 These tests cover the exact NumPy/MATLAB-replication functions in
-``src/neuroposasic/data/core.py``, ``stages.py``, and ``balancer.py``.
+``src/bedposip/data/core.py``, ``stages.py``, and ``balancer.py``.
 """
 
 from pathlib import Path
@@ -10,15 +10,15 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from neuroposasic.data.balancer import balance_to_target
-from neuroposasic.data.core import (
+from bedposip.data.balancer import balance_to_target
+from bedposip.data.core import (
     calculate_centroid,
     gen_trans,
     logic_box,
     mat_to_row,
     row_to_mat,
 )
-from neuroposasic.data.stages import (
+from bedposip.data.stages import (
     distribution_generation,
     matrix_samples,
     no_low_count_cats,

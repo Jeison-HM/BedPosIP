@@ -13,16 +13,16 @@ Exports:
     - :func:`balance_to_target`: Exact-count balancing.
 """
 
-from neuroposasic.data.balancer import balance_to_target
-from neuroposasic.data.core import (
+from bedposip.data.balancer import balance_to_target
+from bedposip.data.core import (
     calculate_centroid,
     gen_trans,
     logic_box,
     mat_to_row,
     row_to_mat,
 )
-from neuroposasic.data.loading import load_dataset, preprocess_data
-from neuroposasic.data.stages import (
+from bedposip.data.loading import load_dataset, preprocess_data
+from bedposip.data.stages import (
     dist_spatial_augmentation,
     distribution_generation,
     spatial_augmentation,

@@ -5,7 +5,7 @@ generate classification reports, and save models. Useful for both the base and
 quantized models.
 
 Example:
-    >>> from neuroposasic.utils import (
+    >>> from bedposip.utils import (
     ...     check_layer_trainable_params, plot_training_history,
     ...     class_report_metric, save_model,
     ... )

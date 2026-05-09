@@ -5,7 +5,7 @@ By centralizing these functions, both FP32 and QAT training are guaranteed
 to use the same interface, facilitating reproducibility and maintenance.
 
 Example:
-    >>> from neuroposasic.model import get_callbacks, train_model
+    >>> from bedposip.model import get_callbacks, train_model
     >>> callbacks = get_callbacks(model_name='base', patience=10)
     >>> history = train_model(
     ...     model, X_train, y_train, X_val, y_val, callbacks,

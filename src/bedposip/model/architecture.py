@@ -10,7 +10,7 @@ Both architectures maintain the same spatial topology to facilitate direct
 comparison and subsequent HLS conversion via hls4ml.
 
 Example:
-    >>> from neuroposasic.model import create_model
+    >>> from bedposip.model import create_model
     >>> model = create_model(input_shape=(8, 8, 1), num_classes=3)
     >>> model.summary()
 """

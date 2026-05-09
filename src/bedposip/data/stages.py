@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 
-from neuroposasic.data.core import (
+from bedposip.data.core import (
     _logic_box_impl,
     calculate_centroid,
     logic_box,
@@ -63,7 +63,7 @@ def spatial_augmentation(
         row = features[idx]
         mat = row_to_mat(row).copy()
         logic, disp = logic_box(mat)
-        from neuroposasic.data.core import gen_trans
+        from bedposip.data.core import gen_trans
 
         new_mats = gen_trans(mat, logic, disp, rng=rng)
         for new_mat in new_mats:
@@ -114,7 +114,7 @@ def dist_spatial_augmentation(
         mat = row_to_mat(row).copy()
         mat[mat < 0] = 0.0
         logic, disp = _logic_box_impl(mat, ensure_centroid=True)
-        from neuroposasic.data.core import gen_trans
+        from bedposip.data.core import gen_trans
 
         new_mats = gen_trans(mat, logic, disp, rng=rng)
         for new_mat in new_mats:

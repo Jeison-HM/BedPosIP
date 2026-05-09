@@ -7,8 +7,8 @@ Exports:
     - :func:`train_model`: Training orchestration.
 """
 
-from neuroposasic.model.architecture import create_model, create_quantized_model
-from neuroposasic.model.training import get_callbacks, train_model
+from bedposip.model.architecture import create_model, create_quantized_model
+from bedposip.model.training import get_callbacks, train_model
 
 __all__ = [
     "create_model",

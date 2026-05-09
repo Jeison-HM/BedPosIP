@@ -23,7 +23,7 @@ def balance_to_target(
     For classes whose available count exceeds the target, random
     **undersampling** is applied.  If a class has *fewer* samples than
     requested, a :class:`ValueError` is raised so the caller knows to
-    increase ``n_samples`` in :func:`neuroposasic.data.stages.distribution_generation`
+    increase ``n_samples`` in :func:`bedposip.data.stages.distribution_generation`
     and re-run the pipeline.
 
     Args:

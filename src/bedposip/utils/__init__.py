@@ -7,7 +7,7 @@ Exports:
     - :func:`save_model`: Model persistence.
 """
 
-from neuroposasic.utils.visualization import (
+from bedposip.utils.visualization import (
     check_layer_trainable_params,
     class_report_metric,
     inspect_quantization_bits,
