@@ -91,7 +91,7 @@ myproject_vivado_accelerator
 .Xil
 firmware
 myproject_prj
-vitis/
+soft_ip/
 *.pdf
 
 # Directorios de documentación y recursos (contenido no fuente)
@@ -105,6 +105,9 @@ reportes/
 
 # Archivos de propuesta antiguos
 propuestaAceleradorNeuronal_JeisonHernandez.*
+
+# Dataset
+!DatosEntrenamiento.csv
 
 # -----------------------------------------------------------------------------
 # 6. SISTEMA OPERATIVO
@@ -126,4 +129,10 @@ Desktop.ini
 # -----------------------------------------------------------------------------
 # 7. MODELO - Ejemplos y referencias no versionados
 # -----------------------------------------------------------------------------
-model/example/
+example/
+
+# -----------------------------------------------------------------------------
+# 8. SYNOPSYS - Librerías
+# -----------------------------------------------------------------------------
+
+libs
