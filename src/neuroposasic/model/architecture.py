@@ -21,7 +21,9 @@ import keras
 from keras import layers, optimizers, regularizers
 
 # HGQ2 imports (only needed for quantized model)
-from hgq.layers import QConv2D, QDense
+from hgq.constraints import MinMax
+from hgq.layers import QConv2D, QDense, QBatchNormalization
+from hgq.quantizer.config import QuantizerConfig
 
 
 def create_model(
@@ -157,12 +159,18 @@ def create_quantized_model(
     # Fixed architecture parameters
     # filters_list = [60, 32, 96]
     # filters_list = [32, 16, 36]
-    filters_list = [12, 12, 20]
+    # filters_list = [12, 12, 20]
+    filters_list = [16, 16, 24]
+    qfilters_list = [42, 64]
+    # qfilters_list = [12, 24]
     kernel_size = 3
     model_name = "posture_classifier_qat"
 
     # Input layer
     inputs = keras.Input(shape=input_shape, name="pressure_map")
+    # Ensure input precision is properly inferred by hls4ml
+    # x = layers.Activation("relu", name="input_act_1")(inputs)
+    # x = QBatchNormalization(name="bn_input_0")(inputs)
 
     # Conv Block 1
     x = QConv2D(
@@ -171,11 +179,13 @@ def create_quantized_model(
         kernel_size=(kernel_size, kernel_size),
         # kernel_initializer="lecun_uniform",
         # kernel_regularizer=regularizers.l1(1e-4),
-        # use_bias=False,
-        activation="relu",
+        use_bias=False,
+        # activation="relu",
         name="qconv_1",
     )(inputs)
-    # x = keras.layers.Activation("relu", name="conv_act_1")(x)
+    # x = layers.MaxPooling2D(pool_size=(2, 2))(x)
+    x = QBatchNormalization(name="bn_conv_1")(x)
+    x = layers.Activation("relu", name="conv_act_1")(x)
 
     # Conv Block 2
     x = QConv2D(
@@ -184,11 +194,13 @@ def create_quantized_model(
         kernel_size=(kernel_size, kernel_size),
         # kernel_initializer="lecun_uniform",
         # kernel_regularizer=regularizers.l1(1e-4),
-        # use_bias=False,
-        activation="relu",
+        use_bias=False,
+        # activation="relu",
         name="qconv_2",
     )(x)
-    # x = keras.layers.Activation("relu", name="conv_act_2")(x)
+    # x = layers.MaxPooling2D(pool_size=(2, 2))(x)
+    x = QBatchNormalization(name="bn_conv_2")(x)
+    x = layers.Activation("relu", name="conv_act_2")(x)
 
     # Conv Block 3
     x = QConv2D(
@@ -197,15 +209,25 @@ def create_quantized_model(
         kernel_size=(kernel_size, kernel_size),
         # kernel_initializer="lecun_uniform",
         # kernel_regularizer=regularizers.l1(1e-4),
-        # use_bias=False,
-        activation="relu",
+        use_bias=False,
+        # activation="relu",
         name="qconv_3",
     )(x)
-    # x = keras.layers.Activation("relu", name="conv_act_3")(x)
+    # x = layers.MaxPooling2D(pool_size=(2, 2))(x)
+    x = QBatchNormalization(name="bn_conv_3")(x)
+    x = layers.Activation("relu", name="conv_act_3")(x)
 
     # Pooling
-    x = keras.layers.MaxPooling2D(pool_size=(2, 2))(x)
-    x = keras.layers.Flatten()(x)
+    # x = layers.MaxPooling2D(pool_size=(2, 2))(x)
+    x = layers.Flatten()(x)
+
+    x = QDense(qfilters_list[0], name="qdense_1")(x)
+    x = QBatchNormalization(name="bn_dense_1")(x)
+    x = layers.Activation("relu")(x)
+
+    x = QDense(qfilters_list[1], name="qdense_2")(x)
+    x = QBatchNormalization(name="bn_dense_2")(x)
+    x = layers.Activation("relu")(x)
 
     # Output layer
     outputs = QDense(num_classes, name="output")(x)
