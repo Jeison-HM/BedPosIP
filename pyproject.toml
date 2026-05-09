@@ -13,6 +13,7 @@ dependencies = [
     "graphviz>=0.21",
     "hgq2>=0.1.8",
     "hls4ml>=1.3.0",
+    "ipykernel>=7.2.0",
     "keras>=3.14.0",
     "keras-tuner>=1.4.8",
     "matplotlib>=3.10.8",
@@ -20,6 +21,7 @@ dependencies = [
     "pandas>=3.0.2",
     "pydot>=4.0.1",
     "scikit-learn>=1.8.0",
+    "seaborn>=0.13.2",
     "tensorboard>=2.20.0",
     "tensorflow[and-cuda]>=2.21.0",
 ]
