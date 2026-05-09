@@ -20,7 +20,7 @@ import keras
 
 # HGQ2 callback (optional, only used for quantized models)
 try:
-    from hgq.utils.sugar import FreeEBOPs, PBar
+    from hgq.utils.sugar import FreeEBOPs
 except ImportError:
     FreeEBOPs = None
 
@@ -78,10 +78,11 @@ def get_callbacks(
         # pbar = PBar(
         #     "loss: {loss:.3f}/{val_loss:.3f} - acc: {accuracy:.3f}/{val_accuracy:.3f}"
         # )
-        ebops = FreeEBOPs()
-        nan_terminate = keras.callbacks.TerminateOnNaN()
+        ebops = FreeEBOPs()  # dynamic beta scheduling to efficiently explore the resource-performance tradeoff
+        # nan_terminate = keras.callbacks.TerminateOnNaN()
 
-        callbacks.extend([ebops, nan_terminate])
+        # callbacks.extend([ebops, nan_terminate])
+        callbacks.extend([ebops])
 
     print("Callbacks configured:")
     for cb in callbacks:
