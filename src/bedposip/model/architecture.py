@@ -179,12 +179,12 @@ def create_quantized_model(
         kernel_size=(kernel_size, kernel_size),
         # kernel_initializer="lecun_uniform",
         # kernel_regularizer=regularizers.l1(1e-4),
-        use_bias=False,
+        # use_bias=False,
         # activation="relu",
         name="qconv_1",
     )(inputs)
     # x = layers.MaxPooling2D(pool_size=(2, 2))(x)
-    x = QBatchNormalization(name="bn_conv_1")(x)
+    # x = QBatchNormalization(name="bn_conv_1")(x)
     x = layers.Activation("relu", name="conv_act_1")(x)
 
     # Conv Block 2
@@ -194,12 +194,12 @@ def create_quantized_model(
         kernel_size=(kernel_size, kernel_size),
         # kernel_initializer="lecun_uniform",
         # kernel_regularizer=regularizers.l1(1e-4),
-        use_bias=False,
+        # use_bias=False,
         # activation="relu",
         name="qconv_2",
     )(x)
     # x = layers.MaxPooling2D(pool_size=(2, 2))(x)
-    x = QBatchNormalization(name="bn_conv_2")(x)
+    # x = QBatchNormalization(name="bn_conv_2")(x)
     x = layers.Activation("relu", name="conv_act_2")(x)
 
     # Conv Block 3
@@ -209,25 +209,25 @@ def create_quantized_model(
         kernel_size=(kernel_size, kernel_size),
         # kernel_initializer="lecun_uniform",
         # kernel_regularizer=regularizers.l1(1e-4),
-        use_bias=False,
+        # use_bias=False,
         # activation="relu",
         name="qconv_3",
     )(x)
     # x = layers.MaxPooling2D(pool_size=(2, 2))(x)
-    x = QBatchNormalization(name="bn_conv_3")(x)
+    # x = QBatchNormalization(name="bn_conv_3")(x)
     x = layers.Activation("relu", name="conv_act_3")(x)
 
     # Pooling
     # x = layers.MaxPooling2D(pool_size=(2, 2))(x)
     x = layers.Flatten()(x)
 
-    x = QDense(qfilters_list[0], name="qdense_1")(x)
-    x = QBatchNormalization(name="bn_dense_1")(x)
-    x = layers.Activation("relu")(x)
+    # x = QDense(qfilters_list[0], name="qdense_1")(x)
+    # x = QBatchNormalization(name="bn_dense_1")(x)
+    # x = layers.Activation("relu")(x)
 
-    x = QDense(qfilters_list[1], name="qdense_2")(x)
-    x = QBatchNormalization(name="bn_dense_2")(x)
-    x = layers.Activation("relu")(x)
+    # x = QDense(qfilters_list[1], name="qdense_2")(x)
+    # x = QBatchNormalization(name="bn_dense_2")(x)
+    # x = layers.Activation("relu")(x)
 
     # Output layer
     outputs = QDense(num_classes, name="output")(x)

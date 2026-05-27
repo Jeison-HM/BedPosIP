@@ -14,14 +14,15 @@ Example:
 """
 
 import time
-from typing import List
+from typing import List, Optional
 
 import keras
 
-# HGQ2 callback (optional, only used for quantized models)
+# HGQ2 callbacks (optional, only used for quantized models)
 try:
-    from hgq.utils.sugar import FreeEBOPs
+    from hgq.utils.sugar import BetaPID, FreeEBOPs
 except ImportError:
+    BetaPID = None
     FreeEBOPs = None
 
 
@@ -29,6 +30,8 @@ def get_callbacks(
     model_name: str = "base",
     patience: int = 10,
     track_ebops: bool = False,
+    target_ebops: Optional[float] = None,
+    init_beta: Optional[float] = None,
 ) -> List[keras.callbacks.Callback]:
     """Configure and return the list of callbacks for training.
 
@@ -38,6 +41,8 @@ def get_callbacks(
         - :class:`ModelCheckpoint`: Save best model based on ``val_loss``.
         - :class:`FreeEBOPs` (optional): EBOP tracking for FPGA resource
           estimation (QAT only).
+        - :class:`BetaPID` (optional): PID controller that dynamically adjusts
+          ``beta`` to steer the model toward a target EBOPs budget.
 
     Args:
         model_name: Base name for the checkpoint file.
@@ -46,6 +51,10 @@ def get_callbacks(
             :class:`ReduceLROnPlateau` (patience//3 for LR).
         track_ebops: If ``True``, includes the :class:`FreeEBOPs` callback
             for HGQ2 resource monitoring.
+        target_ebops: Target EBOPs budget for :class:`BetaPID`. If provided,
+            ``BetaPID`` is added to dynamically adjust ``beta`` during training.
+        init_beta: Initial ``beta`` value for :class:`BetaPID`. If ``None``,
+            the average ``beta`` of the model is used.
 
     Returns:
         List of callback instances ready to pass to :meth:`keras.Model.fit`.
@@ -65,24 +74,29 @@ def get_callbacks(
             patience=max(1, patience // 3),
             verbose=1,
         ),
-        keras.callbacks.ModelCheckpoint(
-            filepath=filepath,
-            monitor="val_loss",
-            save_best_only=True,
-            verbose=1,
-        ),
+        # keras.callbacks.ModelCheckpoint(
+        #     filepath=filepath,
+        #     monitor="val_loss",
+        #     save_best_only=True,
+        #     verbose=1,
+        # ),
     ]
 
     if track_ebops and FreeEBOPs is not None:
-        # Additional callbacks for qat following larger_jet_tagger.ipynb
-        # pbar = PBar(
-        #     "loss: {loss:.3f}/{val_loss:.3f} - acc: {accuracy:.3f}/{val_accuracy:.3f}"
-        # )
-        ebops = FreeEBOPs()  # dynamic beta scheduling to efficiently explore the resource-performance tradeoff
-        # nan_terminate = keras.callbacks.TerminateOnNaN()
-
-        # callbacks.extend([ebops, nan_terminate])
+        ebops = FreeEBOPs()  # EBOPs tracking for FPGA resource estimation
         callbacks.extend([ebops])
+
+    if target_ebops is not None and BetaPID is not None:
+        beta_pid = BetaPID(
+            target_ebops=target_ebops,
+            init_beta=init_beta,
+            warmup=10,
+            log=True,
+            max_beta=1e-4,
+            min_beta=1e-9,
+            damp_beta_on_target=0.1,
+        )
+        callbacks.extend([beta_pid])
 
     print("Callbacks configured:")
     for cb in callbacks:
