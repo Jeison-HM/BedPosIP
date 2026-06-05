@@ -175,50 +175,41 @@ def create_quantized_model(
     # Conv Block 1
     x = QConv2D(
         filters=filters_list[0],
-        # beta0=1e-5,
         kernel_size=(kernel_size, kernel_size),
-        # kernel_initializer="lecun_uniform",
-        # kernel_regularizer=regularizers.l1(1e-4),
+        strides=(1, 1),
+        padding='same',
         use_bias=False,
-        # activation="relu",
         name="qconv_1",
     )(inputs)
-    # x = layers.MaxPooling2D(pool_size=(2, 2))(x)
+    x = layers.MaxPooling2D(pool_size=(2, 2), name="pool_1")(x)
     x = QBatchNormalization(name="bn_conv_1")(x)
     x = layers.Activation("relu", name="conv_act_1")(x)
 
     # Conv Block 2
     x = QConv2D(
         filters=filters_list[1],
-        # beta0=1e-5,
         kernel_size=(kernel_size, kernel_size),
-        # kernel_initializer="lecun_uniform",
-        # kernel_regularizer=regularizers.l1(1e-4),
+        strides=(1, 1),
+        padding='same',
         use_bias=False,
-        # activation="relu",
         name="qconv_2",
     )(x)
-    # x = layers.MaxPooling2D(pool_size=(2, 2))(x)
+    x = layers.MaxPooling2D(pool_size=(2, 2), name="pool_2")(x)
     x = QBatchNormalization(name="bn_conv_2")(x)
     x = layers.Activation("relu", name="conv_act_2")(x)
 
     # Conv Block 3
     x = QConv2D(
         filters=filters_list[2],
-        # beta0=1e-5,
         kernel_size=(kernel_size, kernel_size),
-        # kernel_initializer="lecun_uniform",
-        # kernel_regularizer=regularizers.l1(1e-4),
+        strides=(1, 1),
+        padding='same',
         use_bias=False,
-        # activation="relu",
         name="qconv_3",
     )(x)
-    # x = layers.MaxPooling2D(pool_size=(2, 2))(x)
     x = QBatchNormalization(name="bn_conv_3")(x)
     x = layers.Activation("relu", name="conv_act_3")(x)
 
-    # Pooling
-    # x = layers.MaxPooling2D(pool_size=(2, 2))(x)
     x = layers.Flatten()(x)
 
     x = QDense(qfilters_list[0], name="qdense_1")(x)
