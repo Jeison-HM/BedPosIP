@@ -37,7 +37,13 @@ def check_layer_trainable_params(model: Model) -> None:
     """
     # Taken from part6_cnns.ipynb (also used in Scr_1_TensorFlowCNN.py)
     for layer in model.layers:
-        if layer.__class__.__name__ in ["Conv2D", "Dense"]:
+        if layer.__class__.__name__ in [
+            "Conv2D",
+            "Dense",
+            "QConv2D",
+            "QDense",
+            "QBatchNormalization",
+        ]:
             w = layer.get_weights()[0]
             layersize = np.prod(w.shape)
             print("{}: {}".format(layer.name, layersize))  # 0 = weights, 1 = biases
