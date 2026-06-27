@@ -222,6 +222,91 @@ def inspect_quantization_bits(model: Model, report: bool = False) -> dict:
     return bits_info
 
 
+def check_quantizer_homogeneity(model: Model) -> bool:
+    """Inspect quantization homogeneity for all quantizers in the model.
+
+    Reports the homogeneity status of input (``iq``), kernel (``kq``),
+    and bias (``bq``) quantizers for each quantized layer. A quantizer
+    is homogeneous when its bit-width tensor has exactly one element
+    (``size == 1``), meaning the entire tensor shares the same precision.
+
+    Activation (``iq``) homogeneity is required for ``io_stream`` support
+    in hls4ml. Weight and bias heterogeneity is expected and does not
+    affect ``io_stream`` compatibility.
+
+    Args:
+        model: Quantized :class:`keras.Model` instance (e.g. HGQ2 model).
+
+    Returns:
+        ``True`` if all activation (``iq``) quantizers are homogeneous,
+        ``False`` otherwise.
+
+    Example:
+        >>> from bedposip.utils import check_quantizer_homogeneity
+        >>> ok = check_quantizer_homogeneity(model_qat)
+        Quantizer Homogeneity Check
+        ============================================================
+        Layer: qconv_1 (QConv2D)
+          iq  | shape=(1, 1, 1, 1)  size=   1 | homogeneous
+          kq  | shape=(3, 3, 1, 12) size= 108 | heterogeneous
+          bq  | shape=(12,)         size=  12 | heterogeneous
+        Layer: output (QDense)
+          iq  | shape=(1, 1)        size=   1 | homogeneous
+          kq  | shape=(20, 3)       size=  60 | heterogeneous
+          bq  | shape=(3,)          size=   3 | heterogeneous
+        ------------------------------------------------------------
+        Result: All activation (iq) quantizers are homogeneous.
+                Kernel and bias heterogeneity is expected and does not
+                affect io_stream compatibility.
+    """
+    print("\nQuantizer Homogeneity Check")
+    print("=" * 60)
+
+    iq_homogeneous = True
+    for layer in model.layers:
+        if not hasattr(layer, "iq") and not hasattr(layer, "kq"):
+            continue
+
+        print(f"Layer: {layer.name} ({layer.__class__.__name__})")
+        has_quantizer = False
+        for q_name in ("iq", "kq", "bq"):
+            quantizer = getattr(layer, q_name, None)
+            if quantizer is None:
+                continue
+
+            has_quantizer = True
+            try:
+                bits = quantizer.bits
+                shape = tuple(bits.shape)
+                size = int(bits.size)
+                is_homogeneous = size == 1
+            except Exception:
+                print(f"  {q_name:3s} | (unable to inspect quantizer)")
+                if q_name == "iq":
+                    iq_homogeneous = False
+                continue
+
+            status = "homogeneous" if is_homogeneous else "heterogeneous"
+            print(f"  {q_name:3s} | shape={shape!s:18s} size={size:4d} | {status}")
+
+            if q_name == "iq" and not is_homogeneous:
+                iq_homogeneous = False
+
+        if not has_quantizer:
+            print("  (no quantizers)")
+
+    print("-" * 60)
+    if iq_homogeneous:
+        print("Result: All activation (iq) quantizers are homogeneous.")
+        print("        Kernel and bias heterogeneity is expected and does not")
+        print("        affect io_stream compatibility.")
+    else:
+        print("Result: At least one activation (iq) quantizer is heterogeneous.")
+        print("        hls4ml io_stream may not be supported.")
+
+    return iq_homogeneous
+
+
 def plot_quantization_bits(
     model: Model,
     bits_info: dict | None = None,
