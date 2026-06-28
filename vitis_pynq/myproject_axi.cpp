@@ -27,7 +27,6 @@ void myproject_axi(
     #pragma HLS INTERFACE axis port=in_r
     #pragma HLS INTERFACE axis port=out_r
     #pragma HLS INTERFACE ap_ctrl_none port=return
-    #pragma HLS DATAFLOW
 
     // Local streams to connect to myproject
     hls::stream<pressure_map_t> input_stream("input_stream");
@@ -43,7 +42,7 @@ void myproject_axi(
         #pragma HLS PIPELINE II=1
         input_axi_t val = in_r.read();
         pressure_map_t pm;
-        pm[0] = val.data;  // ap_uint<16> -> ap_ufixed<7,8>
+        pm[0].range(6, 0) = val.data.range(6, 0);  // bit copy: ap_uint<16> -> ap_ufixed<7,8>
         input_stream.write(pm);
     }
 
