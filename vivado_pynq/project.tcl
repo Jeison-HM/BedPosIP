@@ -5,8 +5,8 @@ variable project_name
 set project_name "myproject"
 
 # AXI-Stream data widths (must match myproject_axi wrapper)
-# Input: 16-bit for ap_fixed<14,9> pressure_map_t
-# Output: 32-bit for ap_fixed<19,8> result_t
+# Input: 16-bit for ap_ufixed<7,8> pressure_map_t
+# Output: 32-bit for ap_fixed<14,9> result_t
 variable bit_width_hls_input
 set bit_width_hls_input 16
 

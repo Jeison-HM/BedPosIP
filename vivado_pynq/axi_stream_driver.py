@@ -6,13 +6,27 @@ from pynq import Overlay, allocate
 
 class NeuralNetworkOverlay(Overlay):
     def __init__(
-        self, bitfile_name, x_shape, y_shape, dtype=np.float32, dtbo=None, download=True, ignore_version=False, device=None
+        self,
+        bitfile_name,
+        x_shape,
+        y_shape,
+        dtype=np.float32,
+        input_dtype=None,
+        output_dtype=None,
+        dtbo=None,
+        download=True,
+        ignore_version=False,
+        device=None,
     ):
-        super().__init__(bitfile_name, dtbo=None, download=True, ignore_version=False, device=None)
+        super().__init__(
+            bitfile_name, dtbo=None, download=True, ignore_version=False, device=None
+        )
         self.sendchannel = self.hier_0.axi_dma_0.sendchannel
         self.recvchannel = self.hier_0.axi_dma_0.recvchannel
-        self.input_buffer = allocate(shape=x_shape, dtype=dtype)
-        self.output_buffer = allocate(shape=y_shape, dtype=dtype)
+        in_dt = input_dtype if input_dtype is not None else dtype
+        out_dt = output_dtype if output_dtype is not None else dtype
+        self.input_buffer = allocate(shape=x_shape, dtype=in_dt)
+        self.output_buffer = allocate(shape=y_shape, dtype=out_dt)
 
     def _print_dt(self, timea, timeb, N):
         dt = timeb - timea
@@ -63,13 +77,13 @@ class NeuralNetworkOverlay(Overlay):
         self.recvchannel.wait()
         if debug:
             print("Receive OK")
-        # result = self.output_buffer.copy()
+        result = self.output_buffer.copy()
         if decode is not None:
-            self.output_buffer = decode(self.output_buffer)
+            result = decode(result)
 
         if profile:
             timeb = datetime.now()
             dts, rate = self._print_dt(timea, timeb, len(X))
-            return self.output_buffer, dts, rate
+            return result, dts, rate
         else:
-            return self.output_buffer
+            return result
