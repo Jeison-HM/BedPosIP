@@ -1,25 +1,41 @@
+"""AXI-Stream driver for neural network overlay on PYNQ-Z2."""
+
 from datetime import datetime
+from typing import Callable, Optional, Tuple, Union
 
 import numpy as np
 from pynq import Overlay, allocate
 
+try:
+    from tqdm import tqdm
+except ImportError:
+    # Graceful fallback for environments without tqdm (e.g. bare PYNQ boards).
+    def tqdm(iterable, *, desc=None, **kwargs):
+        return iterable
+
 
 class NeuralNetworkOverlay(Overlay):
+    """Neural network overlay with single-sample and batch AXI-Stream inference."""
+
     def __init__(
         self,
-        bitfile_name,
-        x_shape,
-        y_shape,
-        dtype=np.float32,
-        input_dtype=None,
-        output_dtype=None,
-        dtbo=None,
-        download=True,
-        ignore_version=False,
-        device=None,
-    ):
+        bitfile_name: str,
+        x_shape: Tuple[int, ...],
+        y_shape: Tuple[int, ...],
+        dtype: np.dtype = np.float32,
+        input_dtype: Optional[np.dtype] = None,
+        output_dtype: Optional[np.dtype] = None,
+        dtbo: Optional[str] = None,
+        download: bool = True,
+        ignore_version: bool = False,
+        device: Optional[str] = None,
+    ) -> None:
         super().__init__(
-            bitfile_name, dtbo=None, download=True, ignore_version=False, device=None
+            bitfile_name,
+            dtbo=dtbo,
+            download=download,
+            ignore_version=ignore_version,
+            device=device,
         )
         self.sendchannel = self.hier_0.axi_dma_0.sendchannel
         self.recvchannel = self.hier_0.axi_dma_0.recvchannel
@@ -28,45 +44,24 @@ class NeuralNetworkOverlay(Overlay):
         self.input_buffer = allocate(shape=x_shape, dtype=in_dt)
         self.output_buffer = allocate(shape=y_shape, dtype=out_dt)
 
-    def _print_dt(self, timea, timeb, N):
+    def _print_dt(
+        self, timea: datetime, timeb: datetime, n_samples: int
+    ) -> Tuple[float, float]:
+        """Print and return inference throughput."""
         dt = timeb - timea
         dts = dt.seconds + dt.microseconds * 10**-6
-        rate = N / dts
-        print(f"Classified {N} samples in {dts} seconds ({rate} inferences / s)")
+        rate = n_samples / dts if dts > 0 else float("inf")
+        print(
+            f"Classified {n_samples} samples in {dts:.6f} seconds "
+            f"({rate:.2f} inferences / s)"
+        )
         return dts, rate
 
-    def predict(self, X, debug=False, profile=False, encode=None, decode=None):
-        """
-        Obtain the predictions of the NN implemented in the FPGA.
-        Parameters:
-        - X : the input vector. Should be numpy ndarray.
-        - dtype : the data type of the elements of the input/output vectors.
-                  Note: it should be set depending on the interface of the accelerator; if it uses 'float'
-                  types for the 'data' AXI-Stream field, 'np.float32' dtype is the correct one to use.
-                  Instead if it uses 'ap_fixed<A,B>', 'np.intA' is the correct one to use (note that A cannot
-                  any integer value, but it can assume {..., 8, 16, 32, ...} values. Check `numpy`
-                  doc for more info).
-                  In this case the encoding/decoding has to be computed by the PS. For example for
-                  'ap_fixed<16,6>' type the following 2 functions are the correct one to use for encode/decode
-                  'float' -> 'ap_fixed<16,6>':
-                  ```
-                    def encode(xi):
-                        return np.int16(round(xi * 2**10)) # note 2**10 = 2**(A-B)
-                    def decode(yi):
-                        return yi * 2**-10
-                    encode_v = np.vectorize(encode) # to apply them element-wise
-                    decode_v = np.vectorize(decode)
-                  ```
-        - profile : boolean. Set it to `True` to print the performance of the algorithm in term of `inference/s`.
-        - encode/decode: function pointers. See `dtype` section for more information.
-        - return: an output array based on `np.ndarray` with a shape equal to `y_shape` and a `dtype` equal to
-                  the namesake parameter.
-        """
-        if profile:
-            timea = datetime.now()
-        if encode is not None:
-            X = encode(X)
-        self.input_buffer[:] = X
+    def _run_dma_inference(
+        self, encoded_sample: np.ndarray, debug: bool = False
+    ) -> np.ndarray:
+        """Run a single DMA transfer and return the raw output."""
+        self.input_buffer[:] = encoded_sample
         self.sendchannel.transfer(self.input_buffer)
         self.recvchannel.transfer(self.output_buffer)
         if debug:
@@ -77,13 +72,103 @@ class NeuralNetworkOverlay(Overlay):
         self.recvchannel.wait()
         if debug:
             print("Receive OK")
-        result = self.output_buffer.copy()
+        return self.output_buffer.copy()
+
+    def predict(
+        self,
+        X: np.ndarray,
+        debug: bool = False,
+        profile: bool = False,
+        encode: Optional[Callable[[np.ndarray], np.ndarray]] = None,
+        decode: Optional[Callable[[np.ndarray], np.ndarray]] = None,
+    ) -> Union[np.ndarray, Tuple[np.ndarray, float, float]]:
+        """Run hardware inference for one or more samples.
+
+        Args:
+            X: Input array. A 1D array processes a single sample with shape
+                matching ``x_shape``. A 2D array processes a batch with shape
+                ``(batch_size,) + x_shape``.
+            debug: Print DMA transfer debug messages.
+            profile: Return timing information.
+            encode: Function to encode floating-point inputs to the raw AXI-Stream
+                data type. Should be vectorized so it works on both 1D and 2D
+                arrays.
+            decode: Function to decode raw AXI-Stream outputs back to
+                floating-point. Should be vectorized so it works on both 1D and
+                2D arrays.
+
+        Returns:
+            Output array of shape ``y_shape`` for a single sample, or
+            ``(batch_size,) + y_shape`` for a batch. If ``profile`` is True,
+            returns ``(result, elapsed_seconds, inferences_per_second)``.
+        """
+        X = np.asarray(X)
+
+        if X.ndim == 1:
+            return self._predict_single(X, debug, profile, encode, decode)
+        if X.ndim == 2:
+            return self._predict_batch(X, debug, profile, encode, decode)
+
+        raise ValueError(
+            f"Input must be 1D (single sample) or 2D (batch), got {X.ndim}D"
+        )
+
+    def _predict_single(
+        self,
+        X: np.ndarray,
+        debug: bool,
+        profile: bool,
+        encode: Optional[Callable[[np.ndarray], np.ndarray]],
+        decode: Optional[Callable[[np.ndarray], np.ndarray]],
+    ) -> Union[np.ndarray, Tuple[np.ndarray, float, float]]:
+        """Run inference for a single sample."""
+        if profile:
+            timea = datetime.now()
+        if encode is not None:
+            X = encode(X)
+        result = self._run_dma_inference(X, debug)
+        if decode is not None:
+            result = decode(result)
+        if profile:
+            timeb = datetime.now()
+            dts, rate = self._print_dt(timea, timeb, 1)
+            return result, dts, rate
+        return result
+
+    def _predict_batch(
+        self,
+        X: np.ndarray,
+        debug: bool,
+        profile: bool,
+        encode: Optional[Callable[[np.ndarray], np.ndarray]],
+        decode: Optional[Callable[[np.ndarray], np.ndarray]],
+    ) -> Union[np.ndarray, Tuple[np.ndarray, float, float]]:
+        """Run inference for a batch of samples with progress bar."""
+        expected_shape = self.input_buffer.shape
+        if X.shape[1:] != expected_shape:
+            raise ValueError(
+                f"Input sample shape {X.shape[1:]} does not match expected "
+                f"{expected_shape}"
+            )
+
+        batch_size = X.shape[0]
+        if profile:
+            timea = datetime.now()
+        if encode is not None:
+            X = encode(X)
+
+        iterator = range(batch_size)
+        if batch_size > 1:
+            iterator = tqdm(range(batch_size), desc="HW inference")
+
+        results = [self._run_dma_inference(X[i], debug) for i in iterator]
+        result = np.stack(results)
+
         if decode is not None:
             result = decode(result)
 
         if profile:
             timeb = datetime.now()
-            dts, rate = self._print_dt(timea, timeb, len(X))
+            dts, rate = self._print_dt(timea, timeb, batch_size)
             return result, dts, rate
-        else:
-            return result
+        return result
