@@ -42,7 +42,7 @@ void myproject_axi(
         #pragma HLS PIPELINE II=1
         input_axi_t val = in_r.read();
         pressure_map_t pm;
-        pm[0].range(6, 0) = val.data.range(6, 0);  // bit copy: ap_uint<16> -> ap_ufixed<7,8>
+        pm[0].range(7, 0) = val.data.range(7, 0);  // bit copy: ap_uint<16> -> ap_ufixed<7,8>
         input_stream.write(pm);
     }
 
@@ -60,8 +60,8 @@ void myproject_axi(
     for (unsigned i = 0; i < OUTPUT_SIZE; i++) {
         #pragma HLS PIPELINE II=1
         output_axi_t val;
-        ap_int<14> raw;
-        raw.range(13, 0) = res[i].range(13, 0);
+        ap_int<16> raw;
+        raw.range(15, 0) = res[i].range(15, 0);
         val.data = (ap_int<32>)raw;
         val.keep = 0xF;   // All 4 bytes valid
         val.strb = 0xF;
