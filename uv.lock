@@ -80,6 +80,7 @@ dependencies = [
     { name = "tensorboard" },
     { name = "tensorflow", extra = ["and-cuda"] },
     { name = "tensorflow-model-optimization" },
+    { name = "tqdm" },
 ]
 
 [package.metadata]
@@ -103,6 +104,7 @@ requires-dist = [
     { name = "tensorboard", specifier = ">=2.20.0" },
     { name = "tensorflow", extras = ["and-cuda"], specifier = ">=2.21.0" },
     { name = "tensorflow-model-optimization", specifier = ">=0.8.1" },
+    { name = "tqdm", specifier = ">=4.66.0" },
 ]
 
 [[package]]

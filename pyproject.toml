@@ -28,6 +28,7 @@ dependencies = [
     "tensorboard>=2.20.0",
     "tensorflow-model-optimization>=0.8.1",
     "tensorflow[and-cuda]>=2.21.0",
+    "tqdm>=4.66.0",
 ]
 
 [tool.setuptools.packages.find]
