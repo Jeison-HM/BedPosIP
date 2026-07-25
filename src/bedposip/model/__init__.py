@@ -8,6 +8,7 @@ Exports:
     - :func:`run_sweep`: QAT bit-width sweep execution.
     - :func:`plot_pareto`: Pareto frontier visualization.
     - :func:`print_pareto_summary`: Pareto summary printer.
+    - Pruning is handled via tfmot.sparsity.keras (not this module).
 """
 
 from bedposip.model.architecture import create_model, create_quantized_model
