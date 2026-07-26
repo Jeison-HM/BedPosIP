@@ -18,11 +18,16 @@ Example:
 import os
 from typing import Sequence
 
+import hls4ml
 import keras
 import matplotlib.pyplot as plt
 import numpy as np
 from keras import Model
-from sklearn.metrics import classification_report
+from sklearn.metrics import (
+    classification_report,
+    ConfusionMatrixDisplay,
+    confusion_matrix,
+)
 
 
 def check_layer_trainable_params(model: Model) -> None:
@@ -110,6 +115,8 @@ def class_report_metric(
     X_test: np.ndarray,
     y_test: np.ndarray,
     class_names: Sequence[str],
+    cmap: str = "inferno",
+    save: bool = False,
 ) -> None:
     """Print a classification report for the given model on test data.
 
@@ -144,6 +151,14 @@ def class_report_metric(
             digits=4,
         )
     )
+
+    cm = confusion_matrix(y_true_classes, y_pred_classes)
+    ConfusionMatrixDisplay(cm, display_labels=class_names).plot(cmap=cmap)
+    if save:
+        filepath = f"figures/cm_{model.name}.pdf"
+        plt.savefig(filepath, dpi=300, bbox_inches="tight", format="pdf")
+        print(f"Saved: {filepath}")
+    plt.show()
 
 
 def inspect_quantization_bits(model: Model, report: bool = False) -> dict:
@@ -375,6 +390,89 @@ def plot_quantization_bits(
         plt.savefig(filepath, dpi=300, bbox_inches="tight", format="pdf")
         print(f"Saved: {filepath}")
     plt.show()
+
+
+def inspect_hls4ml_precision(
+    hls_model,
+    report: bool = False,
+    save: bool = False,
+    model_name: str = "hls_model",
+) -> dict:
+    """Inspect layer precision of an hls4ml HLS model.
+
+    Iterates over all layers of the hls4ml model and collects the
+    precision strings for accumulators, weights, biases, and outputs.
+    Optionally prints a report and/or saves a diagram of the model
+    with precision annotations.
+
+    Args:
+        hls_model: hls4ml HLS model instance.
+        report: If ``True``, prints a per-layer precision report to console.
+        save: If ``True``, generates a diagram via
+            :func:`hls4ml.utils.plot_model` and saves it as
+            ``figures/{model_name}_precision.pdf``.
+        model_name: Base name for the generated PDF file. Defaults to
+            ``'hls_model'``.
+
+    Returns:
+        Dictionary mapping layer names to their precision metadata.
+    """
+    precision_info: dict = {}
+    for layer in hls_model.get_layers():
+        layer_info: dict = {
+            "class_name": layer.class_name,
+            "accum_t": None,
+            "weights": {},
+            "variables": {},
+        }
+
+        accum_t = layer.get_attr("accum_t")
+        if accum_t is not None:
+            layer_info["accum_t"] = str(accum_t.precision)
+
+        for w_name, w_var in layer.weights.items():
+            layer_info["weights"][w_name] = str(w_var.type.precision)
+
+        for v_name, v_var in layer.variables.items():
+            layer_info["variables"][v_name] = str(v_var.type.precision)
+
+        precision_info[layer.name] = layer_info
+
+    if report:
+        print("\nhls4ml Layer Precision Report:")
+        print("=" * 70)
+        for layer_name, info in precision_info.items():
+            print(f"\nLayer: {layer_name} ({info['class_name']})")
+            if info["accum_t"] is not None:
+                print(f"  accum_t:  {info['accum_t']}")
+            for w_name, w_prec in info["weights"].items():
+                print(f"  {w_name}: {w_prec}")
+            for v_name, v_prec in info["variables"].items():
+                print(f"  {v_name}: {v_prec}")
+
+    if save:
+        os.makedirs("figures", exist_ok=True)
+
+        png_path = "figures/hls_model.png"
+        hls4ml.utils.plot_model(
+            hls_model,
+            to_file=png_path,
+            show_shapes=True,
+            show_precision=True,
+            dpi=300,
+        )
+
+        fig, ax = plt.subplots(figsize=(12, 12))
+        ax.imshow(plt.imread(png_path))
+        ax.axis("off")
+        plt.tight_layout()
+
+        pdf_path = f"figures/{model_name}_precision.pdf"
+        plt.savefig(pdf_path, dpi=300, bbox_inches="tight", format="pdf")
+        print(f"Saved: {pdf_path}")
+        plt.show()
+
+    return precision_info
 
 
 def save_model(

@@ -7,12 +7,14 @@ Exports:
     - :func:`save_model`: Model persistence.
     - :func:`inspect_quantization_bits`: Learned bit-width summary.
     - :func:`check_quantizer_homogeneity`: Verify activation homogeneity.
+    - :func:`inspect_hls4ml_precision`: hls4ml layer precision inspection.
 """
 
 from bedposip.utils.visualization import (
     check_layer_trainable_params,
     check_quantizer_homogeneity,
     class_report_metric,
+    inspect_hls4ml_precision,
     inspect_quantization_bits,
     plot_quantization_bits,
     plot_training_history,
@@ -23,6 +25,7 @@ __all__ = [
     "check_layer_trainable_params",
     "check_quantizer_homogeneity",
     "class_report_metric",
+    "inspect_hls4ml_precision",
     "inspect_quantization_bits",
     "plot_quantization_bits",
     "plot_training_history",
