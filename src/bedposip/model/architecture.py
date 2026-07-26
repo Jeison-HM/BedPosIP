@@ -18,7 +18,7 @@ Example:
 from typing import Optional
 
 import keras
-from keras import layers, optimizers, regularizers
+from keras import layers, optimizers
 
 # HGQ2 imports (only needed for quantized model)
 from hgq.constraints import MinMax
@@ -54,15 +54,20 @@ def create_model(
     if hp is None:
         # Fixed architecture mode
         filters_list = [16, 16, 24]
+        densefilters_list = [42, 64]
         kernel_size = 3
         learning_rate = 0.001
         model_name = "posture_classifier_base"
     else:
         # Hyperparameter tuning mode
         filters_list = [
-            hp.Int("filters_1", min_value=4, max_value=16, step=4),
-            hp.Int("filters_2", min_value=4, max_value=16, step=4),
-            hp.Int("filters_3", min_value=8, max_value=24, step=4),
+            hp.Int("filters_1", min_value=4, max_value=32, step=4),
+            hp.Int("filters_2", min_value=4, max_value=32, step=4),
+            hp.Int("filters_3", min_value=8, max_value=48, step=4),
+        ]
+        densefilters_list = [
+            hp.Int("densefilters_1", min_value=2, max_value=64, step=4),
+            hp.Int("densefilters_2", min_value=2, max_value=64, step=4),
         ]
         kernel_size = 3
         learning_rate = hp.Choice("learning_rate", values=[0.001, 0.0001])
@@ -71,49 +76,47 @@ def create_model(
     # Input layer
     inputs = keras.Input(shape=input_shape, name="pressure_map")
 
-    # Build 3 conv blocks explicitly
+    # Conv Block 1
     x = layers.Conv2D(
         filters=filters_list[0],
         kernel_size=(kernel_size, kernel_size),
-        # kernel_initializer="lecun_uniform",
-        # kernel_regularizer=regularizers.l1(1e-4),
-        activation="relu",
         use_bias=False,
         name="conv_1",
     )(inputs)
     x = layers.BatchNormalization(name="bn_conv_1")(x)
-    # x = layers.Activation("relu", name="conv_act_1")(x)
+    x = layers.Activation("relu", name="conv_act_1")(x)
 
+    # Conv Block 2
     x = layers.Conv2D(
         filters=filters_list[1],
         kernel_size=(kernel_size, kernel_size),
-        # kernel_initializer="lecun_uniform",
-        # kernel_regularizer=regularizers.l1(1e-4),
-        activation="relu",
         use_bias=False,
         name="conv_2",
     )(x)
     x = layers.BatchNormalization(name="bn_conv_2")(x)
-    # x = layers.Activation("relu", name="conv_act_2")(x)
+    x = layers.Activation("relu", name="conv_act_2")(x)
 
+    # Conv Block 3
     x = layers.Conv2D(
         filters=filters_list[2],
         kernel_size=(kernel_size, kernel_size),
-        # kernel_initializer="lecun_uniform",
-        # kernel_regularizer=regularizers.l1(1e-4),
-        activation="relu",
         use_bias=False,
         name="conv_3",
     )(x)
     x = layers.BatchNormalization(name="bn_conv_3")(x)
-    # x = layers.Activation("relu", name="conv_act_3")(x)
+    x = layers.Activation("relu", name="conv_act_3")(x)
 
     # Pooling
     x = layers.MaxPooling2D(pool_size=(2, 2))(x)
     x = keras.layers.Flatten()(x)
 
-    # Global Average Pooling
-    # x = layers.GlobalAveragePooling2D(name="global_avg_pool")(x)
+    x = layers.Dense(densefilters_list[0], use_bias=False, name="dense_1")(x)
+    x = layers.BatchNormalization(name="bn_dense_1")(x)
+    x = layers.Activation("relu")(x)
+
+    x = layers.Dense(densefilters_list[1], use_bias=False, name="dense_2")(x)
+    x = layers.BatchNormalization(name="bn_dense_2")(x)
+    x = layers.Activation("relu")(x)
 
     # Output layer
     outputs = layers.Dense(num_classes, activation="softmax", name="output")(x)
@@ -157,72 +160,54 @@ def create_quantized_model(
         quantizers.
     """
     # Fixed architecture parameters
-    # filters_list = [60, 32, 96]
-    # filters_list = [32, 16, 36]
-    # filters_list = [12, 12, 20]
-    filters_list = [16, 16, 24]
-    # qfilters_list = [42, 64]
-    qfilters_list = [12, 24]
+    filters_list = [24, 20, 36]
+    qfilters_list = [26, 10]
     kernel_size = 3
     model_name = "posture_classifier_qat"
 
     # Input layer
     inputs = keras.Input(shape=input_shape, name="pressure_map")
-    # x = QMaxPooling2D(pool_size=(2, 2), name="pool_input")(inputs)
-    # Ensure input precision is properly inferred by hls4ml
-    # x = layers.Activation("relu", name="input_act_1")(inputs)
-    # x = QBatchNormalization(name="bn_input_0")(inputs)
 
-    # Conv Block 1
+    # QConv Block 1
     x = QConv2D(
         filters=filters_list[0],
         kernel_size=(kernel_size, kernel_size),
-        # strides=(1, 1),
-        # padding="same",
-        # use_bias=False,
-        activation="relu",
+        use_bias=False,
         name="qconv_1",
     )(inputs)
-    # x = QMaxPooling2D(pool_size=(2, 2), name="pool_1")(x)
-    # x = QBatchNormalization(name="bn_conv_1")(x)
-    # x = layers.Activation("relu", name="conv_act_1")(x)
+    x = QBatchNormalization(name="qbn_conv_1")(x)
+    x = layers.Activation("relu", name="qconv_act_1")(x)
 
-    # Conv Block 2
+    # QConv Block 2
     x = QConv2D(
         filters=filters_list[1],
         kernel_size=(kernel_size, kernel_size),
-        # strides=(1, 1),
-        # padding="same",
-        # use_bias=False,
-        activation="relu",
+        use_bias=False,
         name="qconv_2",
     )(x)
-    # x = QMaxPooling2D(pool_size=(2, 2), name="pool_2")(x)
-    # x = QBatchNormalization(name="bn_conv_2")(x)
-    # x = layers.Activation("relu", name="conv_act_2")(x)
+    x = QBatchNormalization(name="qbn_conv_2")(x)
+    x = layers.Activation("relu", name="qconv_act_2")(x)
 
-    # Conv Block 3
+    # QConv Block 3
     x = QConv2D(
         filters=filters_list[2],
         kernel_size=(kernel_size, kernel_size),
-        # strides=(1, 1),
-        # padding="same",
-        # use_bias=False,
-        activation="relu",
+        use_bias=False,
         name="qconv_3",
     )(x)
-    x = QMaxPooling2D(pool_size=(2, 2), name="pool_3")(x)
-    # x = QBatchNormalization(name="bn_conv_3")(x)
-    # x = layers.Activation("relu", name="conv_act_3")(x)
+    x = QBatchNormalization(name="qbn_conv_3")(x)
+    x = layers.Activation("relu", name="qconv_act_3")(x)
 
+    # QPooling
+    x = QMaxPooling2D(pool_size=(2, 2))(x)
     x = layers.Flatten()(x)
 
     x = QDense(qfilters_list[0], use_bias=False, name="qdense_1")(x)
-    x = QBatchNormalization(name="bn_dense_1")(x)
+    x = QBatchNormalization(name="qbn_dense_1")(x)
     x = layers.Activation("relu")(x)
 
     x = QDense(qfilters_list[1], use_bias=False, name="qdense_2")(x)
-    x = QBatchNormalization(name="bn_dense_2")(x)
+    x = QBatchNormalization(name="qbn_dense_2")(x)
     x = layers.Activation("relu")(x)
 
     # Output layer
