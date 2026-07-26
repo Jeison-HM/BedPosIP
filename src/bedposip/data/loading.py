@@ -22,7 +22,6 @@ from sklearn.preprocessing import LabelEncoder
 
 def load_dataset(
     dataset_dir: str | Path = "../dataset/output",
-    type: str = "raw",
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Load training, validation, and test datasets.
 
@@ -32,10 +31,6 @@ def load_dataset(
     Args:
         dataset_dir: Directory containing the `.npz` files. Can be a string
             or a :class:`pathlib.Path` object.
-        type: Dataset variant to load. Supported values are ``"raw"``,
-            ``"normalized"``, and ``"quantized"``. The filenames are built
-            as ``{split}_{type}.npz`` (e.g. ``train_raw.npz``).
-            Defaults to ``"raw"``.
 
     Returns:
         A tuple with six arrays in the following order:
@@ -45,9 +40,9 @@ def load_dataset(
         FileNotFoundError: If any of the expected files does not exist.
     """
     dataset_path = Path(dataset_dir)
-    train_file = dataset_path / f"train_{type}.npz"
-    val_file = dataset_path / f"val_{type}.npz"
-    test_file = dataset_path / f"test_{type}.npz"
+    train_file = dataset_path / "train.npz"
+    val_file = dataset_path / "val.npz"
+    test_file = dataset_path / "test.npz"
 
     for file in (train_file, val_file, test_file):
         if not file.exists():
