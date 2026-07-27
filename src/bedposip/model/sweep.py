@@ -1,9 +1,9 @@
 """HGQ2 quantizer bit-width sweep utilities.
 
 This module provides functions to sweep over HGQ2 quantizer bit-width
-parameters (i0, b0, f0) for weight, bias, and datalane scopes, execute
-a target notebook for each configuration, and collect Loss, Accuracy,
-EBOPs, LUTs, DSPs for Pareto analysis.
+parameters (bc, ic, i0, b0, fc, f0) for weight and datalane scopes,
+execute a target notebook for each configuration, and collect Loss,
+Accuracy, EBOPs, LUTs, DSPs for Pareto analysis.
 """
 
 from __future__ import annotations
@@ -27,22 +27,25 @@ from nbclient.exceptions import CellExecutionError
 # Constants
 # ---------------------------------------------------------------------------
 QAT_PARAM_RANGES: dict[str, tuple[int, int]] = {
+    "weight_bc": (4, 10),
+    "weight_ic": (4, 10),
     "weight_i0": (1, 4),
     "weight_b0": (4, 8),
-    "bias_i0": (1, 4),
-    "bias_b0": (3, 6),
+    "datalane_fc": (2, 6),
+    "datalane_ic": (4, 10),
     "datalane_i0": (1, 4),
     "datalane_f0": (1, 4),
 }
 
 DEFAULT_TRIALS = 20
 
-_MANUAL_COMBINATIONS: list[tuple[int, int, int, int, int, int]] = [
-    # (2, 6, 2, 4, 3, 3),   # default baseline
-    # (1, 4, 1, 3, 1, 1),
-    # (4, 8, 4, 6, 4, 4),
-    # (2, 5, 2, 3, 2, 2),
-    # (3, 7, 3, 5, 3, 3),
+_MANUAL_COMBINATIONS: list[tuple[int, int, int, int, int, int, int, int]] = [
+    # (weight_bc, weight_ic, weight_i0, weight_b0,
+    #  datalane_fc, datalane_ic, datalane_i0, datalane_f0)
+    (6, 4, 2, 6, 3, 6, 3, 3),  # exact configuration from train_quantized_cnn.ipynb
+    # (8, 6, 3, 7, 4, 8, 3, 4),  # wider constraints example
+    # (4, 4, 1, 4, 2, 4, 1, 1),  # minimal constraints example
+    # (10, 10, 4, 8, 6, 10, 4, 4),  # maximum constraints example
 ]
 
 
@@ -66,14 +69,16 @@ def _build_combinations(trials: int, manual: bool = False) -> list[dict[str, int
     if manual and _MANUAL_COMBINATIONS:
         return [
             {
+                "weight_bc": w_bc,
+                "weight_ic": w_ic,
                 "weight_i0": w_i0,
                 "weight_b0": w_b0,
-                "bias_i0": b_i0,
-                "bias_b0": b_b0,
+                "datalane_fc": d_fc,
+                "datalane_ic": d_ic,
                 "datalane_i0": d_i0,
                 "datalane_f0": d_f0,
             }
-            for w_i0, w_b0, b_i0, b_b0, d_i0, d_f0 in _MANUAL_COMBINATIONS
+            for w_bc, w_ic, w_i0, w_b0, d_fc, d_ic, d_i0, d_f0 in _MANUAL_COMBINATIONS
         ]
 
     combos: list[dict[str, int]] = []
@@ -90,33 +95,49 @@ def _build_combinations(trials: int, manual: bool = False) -> list[dict[str, int
 # ---------------------------------------------------------------------------
 # Notebook manipulation
 # ---------------------------------------------------------------------------
-def _make_patch_pattern(anchor: str, param_names: str) -> re.Pattern:
-    """Build a compiled regex that locates the target key=value pair."""
-    template = (
-        f"(place='{anchor}',\n"
-        f".*?(?:bc|fc)=Max\\(\\d+\\),\n"
-        f".*?ic=Max\\(\\d+\\),\n"
-        f".*?){param_names}"
-    )
-    return re.compile(template, re.DOTALL)
-
-
-_WEIGHT_PATTERN = _make_patch_pattern("weight", r"i0=\d+, b0=\d+")
-_BIAS_PATTERN = _make_patch_pattern("bias", r"i0=\d+, b0=\d+")
-_DATALANE_PATTERN = _make_patch_pattern("datalane", r"i0=\d+, f0=\d+")
+# Patterns for patching constraints and parameters within each quantizer scope.
+# Each pattern is anchored to its respective place='...' to avoid ambiguity
+# between weight ic=Max(...) and datalane ic=Max(...).
+_WEIGHT_BC_PATTERN = re.compile(r"(place='weight'.*?bc=Max\()(\d+)(\))", re.DOTALL)
+_WEIGHT_IC_PATTERN = re.compile(r"(place='weight'.*?ic=Max\()(\d+)(\))", re.DOTALL)
+_WEIGHT_I0B0_PATTERN = re.compile(
+    r"(place='weight'.*?i0=)(\d+)(, b0=)(\d+)", re.DOTALL
+)
+_DATALANE_FC_PATTERN = re.compile(
+    r"(place='datalane'.*?fc=Max\()(\d+)(\))", re.DOTALL
+)
+_DATALANE_IC_PATTERN = re.compile(
+    r"(place='datalane'.*?ic=Max\()(\d+)(\))", re.DOTALL
+)
+_DATALANE_I0F0_PATTERN = re.compile(
+    r"(place='datalane'.*?i0=)(\d+)(, f0=)(\d+)", re.DOTALL
+)
 
 
 def _replace_params(source: str, params: dict[str, int]) -> str:
-    source = _WEIGHT_PATTERN.sub(
-        f"\\1i0={params['weight_i0']}, b0={params['weight_b0']}",
+    """Patch all quantizer parameters (constraints and i0/b0/f0) in source code."""
+    source = _WEIGHT_BC_PATTERN.sub(
+        lambda m: f"{m.group(1)}{params['weight_bc']}{m.group(3)}",
         source,
     )
-    source = _BIAS_PATTERN.sub(
-        f"\\1i0={params['bias_i0']}, b0={params['bias_b0']}",
+    source = _WEIGHT_IC_PATTERN.sub(
+        lambda m: f"{m.group(1)}{params['weight_ic']}{m.group(3)}",
         source,
     )
-    source = _DATALANE_PATTERN.sub(
-        f"\\1i0={params['datalane_i0']}, f0={params['datalane_f0']}",
+    source = _WEIGHT_I0B0_PATTERN.sub(
+        lambda m: f"{m.group(1)}{params['weight_i0']}{m.group(3)}{params['weight_b0']}",
+        source,
+    )
+    source = _DATALANE_FC_PATTERN.sub(
+        lambda m: f"{m.group(1)}{params['datalane_fc']}{m.group(3)}",
+        source,
+    )
+    source = _DATALANE_IC_PATTERN.sub(
+        lambda m: f"{m.group(1)}{params['datalane_ic']}{m.group(3)}",
+        source,
+    )
+    source = _DATALANE_I0F0_PATTERN.sub(
+        lambda m: f"{m.group(1)}{params['datalane_i0']}{m.group(3)}{params['datalane_f0']}",
         source,
     )
     return source
@@ -433,15 +454,17 @@ def print_pareto_summary(
     print(f"Pareto-optimal configurations (accuracy >= {threshold:.0%}):\n")
     print(
         f"{'Run ID':<12} {'Acc':>6} {'EBOPs':>8} {'LUTs':>8} {'DSPs':>6}  "
-        f"{'w_i0':>4} {'w_b0':>4} {'b_i0':>4} {'b_b0':>4} {'d_i0':>4} {'d_f0':>4}"
+        f"{'w_bc':>4} {'w_ic':>4} {'w_i0':>4} {'w_b0':>4} "
+        f"{'d_fc':>4} {'d_ic':>4} {'d_i0':>4} {'d_f0':>4}"
     )
-    print("-" * 75)
+    print("-" * 95)
 
     for row in pareto:
         print(
             f"{row['run_id']:<12} {row['accuracy']*100:>5.1f}% "
             f"{int(row['ebops']):>8} {int(row['luts']):>8} {int(row['dsps']):>6}  "
+            f"{row['weight_bc']:>4} {row['weight_ic']:>4} "
             f"{row['weight_i0']:>4} {row['weight_b0']:>4} "
-            f"{row['bias_i0']:>4} {row['bias_b0']:>4} "
+            f"{row['datalane_fc']:>4} {row['datalane_ic']:>4} "
             f"{row['datalane_i0']:>4} {row['datalane_f0']:>4}"
         )
