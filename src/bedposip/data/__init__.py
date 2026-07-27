@@ -1,8 +1,7 @@
 """NeuroPosASIC data submodule.
 
 Exports:
-    - :func:`load_dataset`: Load `.npz` datasets.
-    - :func:`preprocess_data`: Encode, reshape, and cast data.
+    - :func:`load_dataset`: Load `.npy` datasets.
     - :func:`row_to_mat` / :func:`mat_to_row`: Row ↔ matrix conversions.
     - :func:`calculate_centroid`: Intensity-weighted centroid.
     - :func:`logic_box`: Bounding-box / displacement logic.
@@ -21,7 +20,7 @@ from bedposip.data.core import (
     mat_to_row,
     row_to_mat,
 )
-from bedposip.data.loading import load_dataset, preprocess_data
+from bedposip.data.loading import load_dataset
 from bedposip.data.stages import (
     dist_spatial_augmentation,
     distribution_generation,
@@ -30,7 +29,6 @@ from bedposip.data.stages import (
 
 __all__ = [
     "load_dataset",
-    "preprocess_data",
     "row_to_mat",
     "mat_to_row",
     "calculate_centroid",
