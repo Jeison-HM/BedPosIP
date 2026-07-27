@@ -16,17 +16,20 @@ Example:
 """
 
 import os
-from typing import Sequence
+from typing import Any, Sequence
 
 import hls4ml
 import keras
 import matplotlib.pyplot as plt
 import numpy as np
 from keras import Model
+from scipy.special import softmax
 from sklearn.metrics import (
+    accuracy_score,
     classification_report,
     ConfusionMatrixDisplay,
     confusion_matrix,
+    log_loss,
 )
 
 
@@ -110,55 +113,119 @@ def plot_training_history(
     plt.show()
 
 
+def _compute_classification_metrics(
+    model: Any,
+    X_test: np.ndarray,
+    y_test: np.ndarray,
+    from_logits: bool = True,
+):
+    """Run a single forward pass and compute loss, accuracy, and labels.
+
+    Works with any object that implements ``.predict()``, including
+    :class:`keras.Model` and hls4ml models.
+
+    Args:
+        model: Any object with a ``.predict()`` method.
+        X_test: Test input data.
+        y_test: Test labels, integer ``(N,)`` or one-hot ``(N, C)``.
+        from_logits: If ``True``, apply softmax before computing log_loss.
+
+    Returns:
+        Tuple of (loss, accuracy, y_true_classes, y_pred_classes, y_pred_proba).
+    """
+    # From part4.1_HG_quantization and larger_jet_tagger
+    X_test = np.ascontiguousarray(X_test)
+
+    # From Scr_2_HLS4ML_Vivado_generator
+    try:
+        y_pred = model.predict(X_test, verbose=0)
+    except TypeError:
+        # hls4ml predict does not accept the verbose keyword
+        y_pred = model.predict(X_test)
+
+    # Support both integer labels (N,) and one-hot labels (N, C)
+    if y_test.ndim == 1:
+        y_true_classes = y_test
+    else:
+        y_true_classes = np.argmax(y_test, axis=1)
+
+    y_pred_classes = np.argmax(y_pred, axis=1)
+
+    if from_logits:
+        y_pred_proba = softmax(y_pred, axis=1)
+    else:
+        y_pred_proba = y_pred
+
+    loss = log_loss(y_true=y_true_classes, y_pred=y_pred_proba)
+    accuracy = accuracy_score(y_true_classes, y_pred_classes)
+
+    return loss, accuracy, y_true_classes, y_pred_classes, y_pred_proba, y_pred
+
+
 def class_report_metric(
-    model: Model,
+    model: Any,
     X_test: np.ndarray,
     y_test: np.ndarray,
     class_names: Sequence[str],
     cmap: str = "inferno",
     save: bool = False,
-) -> None:
+    from_logits: bool = True,
+    show_report: bool = True,
+    show_cm: bool = True,
+) -> tuple[np.ndarray, float, float]:
     """Print a classification report for the given model on test data.
 
+    Works with any object that implements ``.predict()``, including
+    :class:`keras.Model` and hls4ml models.
+
     Args:
-        model: Compiled :class:`keras.Model` to evaluate.
+        model: Compiled :class:`keras.Model` or hls4ml model to evaluate.
         X_test: Test input data.
-        y_test: Test labels in one-hot encoded format.
+        y_test: Test labels. Can be integer array ``(N,)`` or one-hot
+            encoded ``(N, num_classes)``.
         class_names: Ordered sequence of class names corresponding to the
             label encoding used during preprocessing.
+        cmap: Colormap for the confusion matrix display.
+        save: If ``True``, saves the confusion matrix figure.
+        from_logits: If ``True``, applies softmax before computing log_loss.
+        show_report: If ``True``, prints the full classification report.
+        show_cm: If ``True``, displays the confusion matrix.
+
+    Returns:
+        Tuple of (y_pred, accuracy, loss).
     """
-    # Evaluate on test set for accuracy and loss
-    test_loss, test_accuracy = model.evaluate(X_test, y_test, verbose=0)
-
-    print(f"\nAccuracy Report for `{model.name}`:")
-    print("=" * 70)
-    print(f"  Loss: {test_loss:.4f}")
-    print(f"  Accuracy: {test_accuracy * 100:.2f}%")
-
-    # Get predictions
-    y_pred_proba = model.predict(X_test, verbose=0)
-    y_pred_classes = np.argmax(y_pred_proba, axis=1)
-    y_true_classes = np.argmax(y_test, axis=1)
-
-    # Classification report
-    print(f"\nClassification Report for `{model.name}`:")
-    print("=" * 70)
-    print(
-        classification_report(
-            y_true_classes,
-            y_pred_classes,
-            target_names=class_names,
-            digits=4,
-        )
+    loss, accuracy, y_true, y_pred_classes, _, y_pred = _compute_classification_metrics(
+        model, X_test, y_test, from_logits=from_logits
     )
 
-    cm = confusion_matrix(y_true_classes, y_pred_classes)
-    ConfusionMatrixDisplay(cm, display_labels=class_names).plot(cmap=cmap)
-    if save:
-        filepath = f"figures/cm_{model.name}.pdf"
-        plt.savefig(filepath, dpi=300, bbox_inches="tight", format="pdf")
-        print(f"Saved: {filepath}")
-    plt.show()
+    name = getattr(model, "name", "model")
+    print(f"\nAccuracy Report for `{name}`:")
+    print("=" * 70)
+    print(f"  Loss: {loss:.4f}")
+    print(f"  Accuracy: {accuracy * 100:.2f}%")
+
+    if show_report:
+        print(f"\nClassification Report for `{name}`:")
+        print("=" * 70)
+        print(
+            classification_report(
+                y_true,
+                y_pred_classes,
+                target_names=class_names,
+                digits=4,
+            )
+        )
+
+    if show_cm:
+        cm = confusion_matrix(y_true, y_pred_classes)
+        ConfusionMatrixDisplay(cm, display_labels=class_names).plot(cmap=cmap)
+        if save:
+            filepath = f"figures/cm_{name}.pdf"
+            plt.savefig(filepath, dpi=300, bbox_inches="tight", format="pdf")
+            print(f"Saved: {filepath}")
+        plt.show()
+
+    return y_pred, accuracy, loss
 
 
 def inspect_quantization_bits(model: Model, report: bool = False) -> dict:
