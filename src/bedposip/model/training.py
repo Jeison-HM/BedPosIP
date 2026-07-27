@@ -123,9 +123,9 @@ def train_model(
     Args:
         model: Compiled :class:`keras.Model` instance.
         X_train: Training data.
-        y_train: Training labels (one-hot).
+        y_train: Training labels (integer array or one-hot).
         X_val: Validation data.
-        y_val: Validation labels (one-hot).
+        y_val: Validation labels (integer array or one-hot).
         callbacks: List of callbacks (see :func:`get_callbacks`).
         batch_size: Batch size. Defaults to 32.
         epochs: Maximum number of epochs. Defaults to 50.

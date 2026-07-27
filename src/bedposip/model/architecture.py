@@ -125,7 +125,7 @@ def create_model(
     model = keras.Model(inputs=inputs, outputs=outputs, name=model_name)
     model.compile(
         optimizer=optimizers.Adam(learning_rate=learning_rate),
-        loss="categorical_crossentropy",
+        loss="sparse_categorical_crossentropy",
         metrics=["accuracy"],
     )
 
@@ -146,7 +146,7 @@ def create_quantized_model(
 
     The output layer returns **logits** (no softmax activation). The caller
     should therefore compile the model with a loss that accepts logits, e.g.
-    ``keras.losses.CategoricalCrossentropy(from_logits=True)``.
+    ``keras.losses.SparseCategoricalCrossentropy(from_logits=True)``.
 
     Args:
         input_shape: Input tensor shape ``(H, W, C)``.
