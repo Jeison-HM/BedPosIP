@@ -520,24 +520,15 @@ def inspect_hls4ml_precision(
     if save:
         os.makedirs("figures", exist_ok=True)
 
-        png_path = "figures/hls_model.png"
+        pdf_path = f"figures/{model_name}_precision.pdf"
         hls4ml.utils.plot_model(
             hls_model,
-            to_file=png_path,
+            to_file=pdf_path,
             show_shapes=True,
             show_precision=True,
             dpi=300,
         )
-
-        fig, ax = plt.subplots(figsize=(12, 12))
-        ax.imshow(plt.imread(png_path))
-        ax.axis("off")
-        plt.tight_layout()
-
-        pdf_path = f"figures/{model_name}_precision.pdf"
-        plt.savefig(pdf_path, dpi=300, bbox_inches="tight", format="pdf")
         print(f"Saved: {pdf_path}")
-        plt.show()
 
     return precision_info
 
