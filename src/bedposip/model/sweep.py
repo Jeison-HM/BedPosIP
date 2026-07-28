@@ -27,12 +27,12 @@ from nbclient.exceptions import CellExecutionError
 # Constants
 # ---------------------------------------------------------------------------
 QAT_PARAM_RANGES: dict[str, tuple[int, int]] = {
-    "weight_bc": (4, 10),
-    "weight_ic": (4, 10),
+    "weight_bc": (6, 10),
+    "weight_ic": (8, 10),
     "weight_i0": (1, 4),
     "weight_b0": (4, 8),
-    "datalane_fc": (2, 6),
-    "datalane_ic": (4, 10),
+    "datalane_fc": (3, 6),
+    "datalane_ic": (8, 10),
     "datalane_i0": (1, 4),
     "datalane_f0": (1, 4),
 }
@@ -53,11 +53,39 @@ _MANUAL_COMBINATIONS: list[tuple[int, int, int, int, int, int, int, int]] = [
 # Parameter generation
 # ---------------------------------------------------------------------------
 def generate_qat_params() -> dict[str, int]:
-    """Generate a random set of quantizer parameters within ranges."""
-    return {
-        name: random.randint(lo, hi)
-        for name, (lo, hi) in QAT_PARAM_RANGES.items()
-    }
+    """Generate a random set of quantizer parameters within ranges.
+
+    Enforces HGQ2 invariants so that initial/target bits never exceed
+    their respective caps (``b0 <= bc`` for weights, ``f0 <= fc`` for
+    datalane, and ``i0 <= ic`` for both scopes).
+    """
+    params: dict[str, int] = {}
+
+    # Sample caps first
+    params["weight_bc"] = random.randint(*QAT_PARAM_RANGES["weight_bc"])
+    params["weight_ic"] = random.randint(*QAT_PARAM_RANGES["weight_ic"])
+    params["datalane_fc"] = random.randint(*QAT_PARAM_RANGES["datalane_fc"])
+    params["datalane_ic"] = random.randint(*QAT_PARAM_RANGES["datalane_ic"])
+
+    # Sample initial bits conditioned on caps (must not exceed them)
+    params["weight_i0"] = random.randint(
+        QAT_PARAM_RANGES["weight_i0"][0],
+        min(QAT_PARAM_RANGES["weight_i0"][1], params["weight_ic"]),
+    )
+    params["weight_b0"] = random.randint(
+        QAT_PARAM_RANGES["weight_b0"][0],
+        min(QAT_PARAM_RANGES["weight_b0"][1], params["weight_bc"]),
+    )
+    params["datalane_i0"] = random.randint(
+        QAT_PARAM_RANGES["datalane_i0"][0],
+        min(QAT_PARAM_RANGES["datalane_i0"][1], params["datalane_ic"]),
+    )
+    params["datalane_f0"] = random.randint(
+        QAT_PARAM_RANGES["datalane_f0"][0],
+        min(QAT_PARAM_RANGES["datalane_f0"][1], params["datalane_fc"]),
+    )
+
+    return params
 
 
 def _params_key(params: dict[str, int]) -> tuple[int, ...]:
@@ -100,15 +128,9 @@ def _build_combinations(trials: int, manual: bool = False) -> list[dict[str, int
 # between weight ic=Max(...) and datalane ic=Max(...).
 _WEIGHT_BC_PATTERN = re.compile(r"(place='weight'.*?bc=Max\()(\d+)(\))", re.DOTALL)
 _WEIGHT_IC_PATTERN = re.compile(r"(place='weight'.*?ic=Max\()(\d+)(\))", re.DOTALL)
-_WEIGHT_I0B0_PATTERN = re.compile(
-    r"(place='weight'.*?i0=)(\d+)(, b0=)(\d+)", re.DOTALL
-)
-_DATALANE_FC_PATTERN = re.compile(
-    r"(place='datalane'.*?fc=Max\()(\d+)(\))", re.DOTALL
-)
-_DATALANE_IC_PATTERN = re.compile(
-    r"(place='datalane'.*?ic=Max\()(\d+)(\))", re.DOTALL
-)
+_WEIGHT_I0B0_PATTERN = re.compile(r"(place='weight'.*?i0=)(\d+)(, b0=)(\d+)", re.DOTALL)
+_DATALANE_FC_PATTERN = re.compile(r"(place='datalane'.*?fc=Max\()(\d+)(\))", re.DOTALL)
+_DATALANE_IC_PATTERN = re.compile(r"(place='datalane'.*?ic=Max\()(\d+)(\))", re.DOTALL)
 _DATALANE_I0F0_PATTERN = re.compile(
     r"(place='datalane'.*?i0=)(\d+)(, f0=)(\d+)", re.DOTALL
 )
@@ -137,7 +159,9 @@ def _replace_params(source: str, params: dict[str, int]) -> str:
         source,
     )
     source = _DATALANE_I0F0_PATTERN.sub(
-        lambda m: f"{m.group(1)}{params['datalane_i0']}{m.group(3)}{params['datalane_f0']}",
+        lambda m: (
+            f"{m.group(1)}{params['datalane_i0']}{m.group(3)}{params['datalane_f0']}"
+        ),
         source,
     )
     return source
@@ -254,9 +278,7 @@ def parse_notebook_results(nb: nbformat.NotebookNode) -> dict[str, Any]:
         results["error"] = "Could not parse Loss/Accuracy from outputs"
     if results["ebops"] is None:
         err = results.get("error") or ""
-        results["error"] = (
-            err + "; Could not parse EBOPs/LUTs/DSPs"
-        ).strip("; ")
+        results["error"] = (err + "; Could not parse EBOPs/LUTs/DSPs").strip("; ")
 
     return results
 
@@ -267,7 +289,7 @@ def parse_notebook_results(nb: nbformat.NotebookNode) -> dict[str, Any]:
 def run_sweep(
     trials: int = DEFAULT_TRIALS,
     manual: bool = False,
-    notebook_path: Path | str = "model/train_quantized_cnn.ipynb",
+    notebook_path: Path | str = "pipeline/04_train_quantized_cnn.ipynb",
 ) -> pd.DataFrame:
     """Run a QAT bit-width sweep by executing the target notebook for each config.
 
@@ -434,9 +456,7 @@ def print_pareto_summary(
         print(f"No configurations meet the {threshold:.0%} accuracy threshold.")
         return
 
-    print(
-        f"Runs with accuracy >= {threshold:.0%}: {len(high)} out of {len(valid)}\n"
-    )
+    print(f"Runs with accuracy >= {threshold:.0%}: {len(high)} out of {len(valid)}\n")
 
     # Pareto frontier computation on filtered subset
     sub = high.sort_values(resource)
@@ -461,7 +481,7 @@ def print_pareto_summary(
 
     for row in pareto:
         print(
-            f"{row['run_id']:<12} {row['accuracy']*100:>5.1f}% "
+            f"{row['run_id']:<12} {row['accuracy'] * 100:>5.1f}% "
             f"{int(row['ebops']):>8} {int(row['luts']):>8} {int(row['dsps']):>6}  "
             f"{row['weight_bc']:>4} {row['weight_ic']:>4} "
             f"{row['weight_i0']:>4} {row['weight_b0']:>4} "

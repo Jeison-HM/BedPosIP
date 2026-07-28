@@ -1,0 +1,31 @@
+{
+    "DESIGN_NAME": "myproject",
+    "VERILOG_FILES": [
+        "dir::rtl/*.v"
+    ],
+    "CLOCK_PERIOD": 100,
+    "CLOCK_PORT": "ap_clk",
+    "pdk::sky130A": {
+        "MAX_FANOUT_CONSTRAINT": 6,
+        "FP_CORE_UTIL": 40,
+        "PL_TARGET_DENSITY_PCT": "expr::($FP_CORE_UTIL + 10.0)"
+    },
+    "meta": {
+        "version": 2,
+        "flow": [
+            "Verilator.Lint",
+            "Checker.LintTimingConstructs",
+            "Checker.LintErrors",
+            "Checker.LintWarnings",
+            "Yosys.JsonHeader",
+            "Yosys.Synthesis",
+            "Checker.YosySunmAppedCells",
+            "Checker.YosysSynthChecks",
+            "Checker.NetlistAssignStatements",
+            "OpenROAD.CheckSDCFiles",
+            "OpenROAD.CheckMacroInstances",
+            "OpenROAD.STAprePNR"
+        ]
+    },
+    "PNR_SDC_FILE": "constraint.sdc"
+}

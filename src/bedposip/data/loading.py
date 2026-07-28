@@ -16,7 +16,7 @@ import numpy as np
 
 
 def load_dataset(
-    dataset_dir: str | Path = "../dataset/output",
+    dataset_dir: str | Path = "input/",
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """Load training, validation, and test datasets.
 
