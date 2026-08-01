@@ -56,6 +56,7 @@ wheels/
 *.bak*
 .~lock*#
 indent.log
+main.bbl-SAVE-ERROR
 
 # -----------------------------------------------------------------------------
 # FPGA / HLS / Vivado / Vitis Generated Artifacts
@@ -65,35 +66,39 @@ myproject_vivado_accelerator
 myproject_prj
 .Xil
 firmware
-soft_ip/
+pipeline/input/platform/*
+!pipeline/input/platform/pynq-z2.xsa
 
 # -----------------------------------------------------------------------------
 # Synthesis
 # -----------------------------------------------------------------------------
 libs
 runs/
+rtl/
 
 # -----------------------------------------------------------------------------
 # Data, Outputs & Documents
 # -----------------------------------------------------------------------------
 output
 *.csv
-*.npz
+*.npy
 *.hex
 *.xlsx
 *.pdf
 dataset/augmentation
 !DatosEntrenamiento.csv
+figures/PlotNeuralNet/*
+!figures/PlotNeuralNet/bedposip
 
 propuestaAceleradorNeuronal_JeisonHernandez.*
 documents/
 images/
 postulacion/
 propuesta/
-pynq-z2/
 reportes/
 .old/
 congreso/
+pipeline/scripts
 
 # -----------------------------------------------------------------------------
 # Model Examples & References
