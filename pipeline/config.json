@@ -3,10 +3,10 @@
     "VERILOG_FILES": [
         "dir::rtl/*.v"
     ],
-    "CLOCK_PERIOD": 100,
+    "CLOCK_PERIOD": 200,
     "CLOCK_PORT": "ap_clk",
     "pdk::sky130A": {
-        "MAX_FANOUT_CONSTRAINT": 6,
+        "MAX_FANOUT_CONSTRAINT": 12,
         "FP_CORE_UTIL": 40,
         "PL_TARGET_DENSITY_PCT": "expr::($FP_CORE_UTIL + 10.0)"
     },
@@ -26,6 +26,5 @@
             "OpenROAD.CheckMacroInstances",
             "OpenROAD.STAprePNR"
         ]
-    },
-    "PNR_SDC_FILE": "constraint.sdc"
+    }
 }
