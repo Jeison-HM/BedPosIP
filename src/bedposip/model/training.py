@@ -59,7 +59,6 @@ def get_callbacks(
     Returns:
         List of callback instances ready to pass to :meth:`keras.Model.fit`.
     """
-    filepath = f"best_{model_name}_model.keras"
 
     callbacks: List[keras.callbacks.Callback] = [
         keras.callbacks.EarlyStopping(
@@ -74,12 +73,6 @@ def get_callbacks(
             patience=max(1, patience // 3),
             verbose=1,
         ),
-        # keras.callbacks.ModelCheckpoint(
-        #     filepath=filepath,
-        #     monitor="val_loss",
-        #     save_best_only=True,
-        #     verbose=1,
-        # ),
     ]
 
     if track_ebops and FreeEBOPs is not None:
