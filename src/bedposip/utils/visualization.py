@@ -33,6 +33,15 @@ from sklearn.metrics import (
 )
 
 
+COLORS: dict[str, str] = {
+    "red_wine": "#7C0A02",
+    "red_coral": "#F05941",
+    "orange_amber": "#EFA700",
+    "sky_blue": "#87CEEB",
+    "grass_green": "#7CFC00",
+}
+
+
 def check_layer_trainable_params(model: Model) -> None:
     """Print the number of trainable parameters per layer.
 
@@ -84,8 +93,18 @@ def plot_training_history(
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
     # Plot loss
-    axes[0].plot(history.history["loss"], label="Training Loss", linewidth=2)
-    axes[0].plot(history.history["val_loss"], label="Validation Loss", linewidth=2)
+    axes[0].plot(
+        history.history["loss"],
+        label="Training Loss",
+        color=COLORS["sky_blue"],
+        linewidth=2,
+    )
+    axes[0].plot(
+        history.history["val_loss"],
+        label="Validation Loss",
+        color=COLORS["red_coral"],
+        linewidth=2,
+    )
     axes[0].set_xlabel("Epoch", fontsize=12)
     axes[0].set_ylabel("Loss", fontsize=12)
     axes[0].set_title("Training and Validation Loss", fontsize=14)
@@ -93,10 +112,16 @@ def plot_training_history(
     axes[0].grid(True, alpha=0.3)
 
     # Plot accuracy
-    axes[1].plot(history.history["accuracy"], label="Training Accuracy", linewidth=2)
+    axes[1].plot(
+        history.history["accuracy"],
+        label="Training Accuracy",
+        color=COLORS["sky_blue"],
+        linewidth=2,
+    )
     axes[1].plot(
         history.history["val_accuracy"],
         label="Validation Accuracy",
+        color=COLORS["red_coral"],
         linewidth=2,
     )
     axes[1].set_xlabel("Epoch", fontsize=12)
@@ -167,7 +192,7 @@ def class_report_metric(
     X_test: np.ndarray,
     y_test: np.ndarray,
     class_names: Sequence[str],
-    cmap: str = "inferno",
+    cmap: str = "Blues",
     save: bool = False,
     from_logits: bool = True,
     show_report: bool = True,
@@ -218,7 +243,9 @@ def class_report_metric(
 
     if show_cm:
         cm = confusion_matrix(y_true, y_pred_classes)
-        ConfusionMatrixDisplay(cm, display_labels=class_names).plot(cmap=cmap)
+        ConfusionMatrixDisplay(cm, display_labels=class_names).plot(
+            cmap=cmap, colorbar=False
+        )
         if save:
             filepath = f"figures/cm_{name}.pdf"
             plt.savefig(filepath, dpi=300, bbox_inches="tight", format="pdf")
@@ -439,9 +466,11 @@ def plot_quantization_bits(
     width = 0.25
 
     fig, ax = plt.subplots(figsize=(max(8, len(names) * 1.5), 6))
-    ax.bar(x - width, iq_bits, width, label="iq (activations)", color="#4472C4")
-    ax.bar(x, kq_bits, width, label="kq (weights)", color="#ED7D31")
-    ax.bar(x + width, bq_bits, width, label="bq (bias)", color="#70AD47")
+    ax.bar(
+        x - width, iq_bits, width, label="iq (activations)", color=COLORS["red_coral"]
+    )
+    ax.bar(x, kq_bits, width, label="kq (weights)", color=COLORS["orange_amber"])
+    ax.bar(x + width, bq_bits, width, label="bq (bias)", color=COLORS["sky_blue"])
 
     ax.set_ylabel("Bits", fontsize=12)
     ax.set_title(f"Learned Quantization Bit-widths: {model.name}", fontsize=14)
