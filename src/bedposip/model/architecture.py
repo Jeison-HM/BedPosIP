@@ -61,13 +61,13 @@ def create_model(
     else:
         # Hyperparameter tuning mode
         filters_list = [
-            hp.Int("filters_1", min_value=4, max_value=32, step=4),
-            hp.Int("filters_2", min_value=4, max_value=32, step=4),
-            hp.Int("filters_3", min_value=8, max_value=48, step=4),
+            hp.Int("filters_1", min_value=8, max_value=24, step=4),
+            hp.Int("filters_2", min_value=8, max_value=24, step=4),
+            hp.Int("filters_3", min_value=8, max_value=32, step=4),
         ]
         densefilters_list = [
-            hp.Int("densefilters_1", min_value=2, max_value=64, step=4),
-            hp.Int("densefilters_2", min_value=2, max_value=64, step=4),
+            hp.Int("densefilters_1", min_value=8, max_value=32, step=4),
+            hp.Int("densefilters_2", min_value=8, max_value=32, step=4),
         ]
         kernel_size = 3
         learning_rate = hp.Choice("learning_rate", values=[0.001, 0.0001])
@@ -160,8 +160,8 @@ def create_quantized_model(
         quantizers.
     """
     # Fixed architecture parameters
-    filters_list = [24, 20, 36]
-    qfilters_list = [26, 10]
+    filters_list = [20, 20, 28]
+    qfilters_list = [28, 24]
     kernel_size = 3
     model_name = "posture_classifier_qat"
 
