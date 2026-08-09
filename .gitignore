@@ -85,6 +85,7 @@ output
 *.hex
 *.xlsx
 *.pdf
+*.svg
 dataset/augmentation
 !DatosEntrenamiento.csv
 figures/PlotNeuralNet/*
@@ -99,6 +100,7 @@ reportes/
 .old/
 congreso/
 pipeline/scripts
+presentacion/
 
 # -----------------------------------------------------------------------------
 # Model Examples & References
