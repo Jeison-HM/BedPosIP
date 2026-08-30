@@ -86,6 +86,9 @@ output
 *.xlsx
 *.pdf
 *.svg
+*.png
+*.gif
+*.xcf
 dataset/augmentation
 !DatosEntrenamiento.csv
 figures/PlotNeuralNet/*
@@ -100,7 +103,6 @@ reportes/
 .old/
 congreso/
 pipeline/scripts
-presentacion/
 
 # -----------------------------------------------------------------------------
 # Model Examples & References
@@ -113,3 +115,13 @@ example/
 *.txt
 tuning
 *.jou
+
+# -----------------------------------------------------------------------------
+# Presentation
+# -----------------------------------------------------------------------------
+
+presentation/*
+!presentation/sass
+!presentation/*.html
+!presentation/*.qmd
+presentation/presentation.html
