@@ -4,28 +4,28 @@
 
 <!-- GitHub Badges Section -->
 <p align="center">
-  <a href="https://www.python.org/">
+  <a href="https://www.python.org/" style="text-decoration: none">
     <img alt="Python" height="24.5px" style="padding-right:5px;" src="https://custom-icon-badges.demolab.com/badge/Python-3.13-2D3436?style=for-the-badge&logo=python&logoColor=white&logoSize=auto&labelColor=3776AB"/>
   </a>
-  <a href="https://keras.io/">
+  <a href="https://keras.io/" style="text-decoration: none">
     <img alt="Keras" height="24.5px" style="padding-right:5px;" src="https://custom-icon-badges.demolab.com/badge/Keras-3.14.0-2D3436?style=for-the-badge&logo=keras&logoColor=white&logoSize=auto&labelColor=D00000"/>
   </a>
-  <a href="https://www.tensorflow.org/">
+  <a href="https://www.tensorflow.org/" style="text-decoration: none">
     <img alt="TensorFlow" height="24.5px" style="padding-right:5px;" src="https://custom-icon-badges.demolab.com/badge/TensorFlow-2.21.0-2D3436?style=for-the-badge&logo=tensorflow&logoColor=white&logoSize=auto&labelColor=FF6F00"/>
   </a>
-  <a href="https://fastmachinelearning.org/hls4ml/">
+  <a href="https://fastmachinelearning.org/hls4ml/" style="text-decoration: none">
     <img alt="hls4ml" height="24.5px" style="padding-right:5px;" src="https://custom-icon-badges.demolab.com/badge/hls4ml-1.2.0-2D3436?style=for-the-badge&logoColor=white&logoSize=auto&labelColor=1F4E79"/>
   </a>
-  <a href="https://www.amd.com/en/products/software/adaptive-socs-and-fpgas/vitis.html">
+  <a href="https://www.amd.com/en/support/downloads/adaptive-socs-and-fpgas/development-tools/2023-2.html" style="text-decoration: none">
     <img alt="Vitis" height="24.5px" style="padding-right:5px;" src="https://custom-icon-badges.demolab.com/badge/Vitis-2023.2-2D3436?style=for-the-badge&logo=amd&logoColor=white&logoSize=auto&labelColor=ED1C24"/>
   </a>
-  <a href="https://fossi-foundation.org/librelane">
+  <a href="https://fossi-foundation.org/librelane" style="text-decoration: none">
     <img alt="LibreLane" height="24.5px" style="padding-right:5px;" src="https://custom-icon-badges.demolab.com/badge/fossi-LibreLane-622eed?style=for-the-badge&logo=fossi&logoColor=white&logoSize=auto&labelColor=2D3436"/>
   </a>
-  <a href="https://github.com/google/skywater-pdk">
+  <a href="https://github.com/google/skywater-pdk" style="text-decoration: none">
     <img alt="SKY130" height="24.5px" style="padding-right:5px;" src="https://custom-icon-badges.demolab.com/badge/SkyWater-130nm-2D3436?style=for-the-badge&logo=skywater&logoColor=white&logoSize=auto&labelColor=3f6b87"/>
   </a>
-  <a href="https://www.apache.org/licenses/LICENSE-2.0">
+  <a href="https://www.apache.org/licenses/LICENSE-2.0" style="text-decoration: none">
     <img alt="APACHE" height="24.5px" style="padding-right:5px;" src="https://custom-icon-badges.demolab.com/badge/License-APACHE%202.0-D22128?style=for-the-badge&logo=apache&logoColor=white&logoSize=auto&labelColor=2D3436"/>
   </a>
   <br />
@@ -154,8 +154,8 @@ pipeline/
 │   ├── posture_classifier_qat.keras         # Step 04 — quantized
 │   ├── gen_bitstream/                       # Step 05 — VitisUnified build
 │   │   └── export/                          
-│   │       ├── system.bit                   # Step 06 — ALL 3 FILES BELOW MUST BE COPIED TO THE PYNQ-Z2
-│   │       ├── system.hwh                   
+│   │       ├── system.bit                   # Step 06 — ALL 3 FILES BELOW
+│   │       ├── system.hwh                   # MUST BE COPIED TO THE PYNQ-Z2
 │   │       └── axi_stream_driver.py         
 │   │
 │   └── export_ip/                           # Step 07 — Vitis build
