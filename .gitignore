@@ -108,6 +108,7 @@ pipeline/scripts
 # Model Examples & References
 # -----------------------------------------------------------------------------
 example/
+!figures/*
 
 # -----------------------------------------------------------------------------
 # Conversions & Generated Text Files
